@@ -3,422 +3,7 @@
 {% block title %}设置{% endblock %}
 
 {% block head %}
-<style>
-/* 基础样式变量 */
-:root {
-    --primary-color: #0066FF;      /* Apple 蓝色 */
-    --success-color: #34C759;      /* Apple 绿色 */
-    --danger-color: #FF3B30;       /* Apple 红色 */
-    --warning-color: #FF9500;      /* Apple 橙色 */
-    --secondary-text: #8E8E93;     /* Apple 次要文本 */
-    --border-color: #E5E5EA;       /* Apple 边框色 */
-    --card-bg: #FFFFFF;
-    --hover-bg: #F2F2F7;          /* Apple 系统悬停色 */
-}
 
-/* 页面标题样式 */
-.page-header {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    padding: 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: var(--bg-color);
-    margin: -20px -20px 24px -20px;
-    border-bottom: 1px solid var(--border-color);
-    backdrop-filter: saturate(180%) blur(20px);
-    background-color: rgba(245, 245, 247, 0.8);
-}
-
-.page-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text-color);
-    margin: 0;
-}
-
-.upload-section {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.upload-title {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 16px;
-}
-
-.upload-description {
-    color: var(--secondary-text);
-    font-size: 14px;
-    margin-bottom: 24px;
-    line-height: 1.5;
-}
-
-.file-upload {
-    border: 2px dashed var(--border-color);
-    border-radius: 12px;
-    padding: 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin: 24px 0;
-    background: var(--hover-bg);
-    position: relative;
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.file-upload:hover {
-    border-color: var(--primary-color);
-    background: rgba(0, 102, 255, 0.05);
-}
-
-.file-upload input[type="file"] {
-    display: none;
-}
-
-.upload-icon {
-    font-size: 48px;
-    color: var(--primary-color);
-    margin-bottom: 24px;
-    opacity: 0.8;
-}
-
-.upload-text {
-    color: var(--secondary-text);
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.file-list {
-    margin-top: 24px;
-}
-
-.file-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    background: var(--hover-bg);
-    border-radius: 8px;
-    margin-bottom: 8px;
-}
-
-.file-name {
-    flex: 1;
-    margin-left: 12px;
-}
-
-.file-status {
-    margin-left: 12px;
-    font-size: 13px;
-}
-
-.status-success {
-    color: var(--success-color);
-}
-
-.status-error {
-    color: var(--danger-color);
-}
-
-.delete-btn {
-    padding: 4px 8px;
-    border: none;
-    background: none;
-    color: var(--danger-color);
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-
-.delete-btn:hover {
-    opacity: 1;
-}
-
-.restore-btn {
-    padding: 4px 8px;
-    border: none;
-    background: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-    margin-right: 8px;
-}
-
-.restore-btn:hover {
-    opacity: 1;
-}
-
-/* 添加隐私声明样式 */
-.privacy-notice {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.privacy-notice h2 {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 16px;
-}
-
-.privacy-notice p {
-    color: var(--secondary-text);
-    font-size: 14px;
-    margin-bottom: 16px;
-    line-height: 1.5;
-}
-
-.privacy-notice ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.privacy-notice li {
-    color: var(--secondary-text);
-    font-size: 14px;
-    margin-bottom: 8px;
-    padding-left: 24px;
-    position: relative;
-}
-
-.privacy-notice li:before {
-    content: '✓';
-    color: var(--success-color);
-    position: absolute;
-    left: 0;
-}
-
-/* 添加上传指南样式 */
-.upload-guide {
-    background: var(--hover-bg);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 24px;
-}
-
-.upload-guide h3 {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-color);
-    margin-bottom: 12px;
-}
-
-.upload-guide ol {
-    color: var(--secondary-text);
-    font-size: 14px;
-    margin: 0;
-    padding-left: 20px;
-}
-
-.upload-guide li {
-    margin-bottom: 8px;
-}
-
-/* 添加文件上传进度条样式 */
-.upload-progress {
-    width: 100%;
-    height: 4px;
-    background: var(--hover-bg);
-    border-radius: 2px;
-    margin-top: 8px;
-    overflow: hidden;
-    display: none;
-}
-
-.progress-bar {
-    height: 100%;
-    background: var(--primary-color);
-    width: 0;
-    transition: width 0.3s ease;
-}
-
-/* 添加文件大小提示样式 */
-.file-size-warning {
-    color: var(--warning-color);
-    font-size: 12px;
-    margin-top: 4px;
-    display: none;
-}
-
-/* 添加拖拽状态样式 */
-.file-upload.dragover {
-    border-color: var(--primary-color);
-    background: rgba(0, 102, 255, 0.05);
-    transform: scale(1.02);
-}
-
-/* 移动端优化 */
-@media (max-width: 768px) {
-    .upload-section {
-        padding: 16px;
-    }
-
-    .file-upload {
-        min-height: 160px;
-        padding: 24px;
-    }
-
-    .upload-icon {
-        font-size: 36px;
-        margin-bottom: 16px;
-    }
-
-    .file-item {
-        flex-wrap: wrap;
-    }
-
-    .file-name {
-        width: 100%;
-        margin-bottom: 8px;
-    }
-
-    .file-actions {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-}
-
-/* 添加计时器样式 */
-.session-timer {
-    background: var(--hover-bg);
-    padding: 8px 16px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: var(--secondary-text);
-    margin-bottom: 16px;
-}
-
-.session-timer i {
-    color: var(--primary-color);
-}
-
-/* 更新提示样式 */
-.alert-message {
-    background: #E8F4FD;
-    border: 1px solid #BAE3FF;
-    color: #0066CC;
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin: 20px 0 24px 0;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
-    animation: alertFadeIn 0.5s ease-out;
-}
-
-.alert-message i {
-    font-size: 24px;
-    color: #0066CC;
-}
-
-.alert-content {
-    flex: 1;
-}
-
-.alert-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #0066CC;
-}
-
-.alert-description {
-    color: #2C5282;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-@keyframes alertFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 添加闪烁动画 */
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
-.alert-icon {
-    animation: pulse 2s infinite;
-}
-
-/* 在 upload-section 后面添加删除区域 */
-.delete-section {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.section-title {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 16px;
-}
-
-.delete-area {
-    padding: 16px;
-    background: #FEF2F2;
-    border-radius: 8px;
-    border: 1px solid #FCA5A5;
-}
-
-.delete-all-btn {
-    background: #DC2626;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-}
-
-.delete-all-btn:hover {
-    background: #B91C1C;
-}
-
-.delete-warning {
-    margin-top: 12px;
-    color: #991B1B;
-    font-size: 13px;
-}
-</style>
 {% endblock %}
 
 {% block content %}
@@ -451,7 +36,7 @@
     <p class="upload-description">
         支持上传支付宝账单CSV文件。请确保文件包含必要的字段：交易时间、交易分类、收/支、金额、商品说明、交易状态、交易对方。
     </p>
-    
+
     <div class="upload-guide">
         <h3>如何获取支付宝账单？</h3>
         <ol>
@@ -462,7 +47,7 @@
             <li>按年份重命名为【alipay_record_2024.csv】格式</li>
         </ol>
     </div>
-    
+
     <label class="file-upload" id="uploadArea">
         <input type="file" id="fileInput" accept=".csv" multiple>
         <div class="upload-icon">
@@ -494,126 +79,126 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('fileInput');
-    const fileList = document.getElementById('fileList');
-    const maxFileSize = 16 * 1024 * 1024; // 16MB
+    document.addEventListener('DOMContentLoaded', function () {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const maxFileSize = 16 * 1024 * 1024; // 16MB
 
-    // 添加文件大小检查
-    function checkFileSize(file) {
-        if (file.size > maxFileSize) {
-            showError(`文件 ${file.name} 超过大小限制（16MB）`, uploadArea);
-            return false;
+        // 添加文件大小检查
+        function checkFileSize(file) {
+            if (file.size > maxFileSize) {
+                showError(`文件 ${file.name} 超过大小限制（16MB）`, uploadArea);
+                return false;
+            }
+            return true;
         }
-        return true;
-    }
 
-    // 处理文件上传
-    async function uploadFile(file) {
-        if (!checkFileSize(file)) return;
+        // 处理文件上传
+        async function uploadFile(file) {
+            if (!checkFileSize(file)) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
+            const formData = new FormData();
+            formData.append('file', file);
 
-        const fileItem = createFileItem(file.name, '准备上传...');
-        fileList.appendChild(fileItem);
+            const fileItem = createFileItem(file.name, '准备上传...');
+            fileList.appendChild(fileItem);
 
-        // 添加进度条
-        const progressDiv = document.createElement('div');
-        progressDiv.className = 'upload-progress';
-        progressDiv.innerHTML = '<div class="progress-bar"></div>';
-        fileItem.appendChild(progressDiv);
-        progressDiv.style.display = 'block';
+            // 添加进度条
+            const progressDiv = document.createElement('div');
+            progressDiv.className = 'upload-progress';
+            progressDiv.innerHTML = '<div class="progress-bar"></div>';
+            fileItem.appendChild(progressDiv);
+            progressDiv.style.display = 'block';
 
-        try {
-            const response = await fetchWithRetry('/api/upload', {
-                method: 'POST',
-                body: formData
-            }, 3);
+            try {
+                const response = await fetchWithRetry('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                }, 3);
 
-            const data = await response.json();
-            if (data.success) {
-                updateFileItem(fileItem, data.filename, true, data.message);
-                showToast('文件上传成功');
-                handleUploadSuccess();
+                const data = await response.json();
+                if (data.success) {
+                    updateFileItem(fileItem, data.filename, true, data.message);
+                    showToast('文件上传成功');
+                    handleUploadSuccess();
+                } else {
+                    updateFileItem(fileItem, file.name, false, data.error);
+                    showError(data.error);
+                }
+            } catch (error) {
+                updateFileItem(fileItem, file.name, false, '上传失败，请重试');
+                showError('网络错误，请重试');
+            }
+        }
+
+        // 添加移动端检测
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        // 根据设备类型调整界面
+        function adjustForDevice() {
+            if (isMobile()) {
+                uploadArea.querySelector('.upload-text').innerHTML = '点击上传文件<br><span style="font-size: 12px; opacity: 0.7;">支持 CSV 格式，最大 16MB</span>';
             } else {
-                updateFileItem(fileItem, file.name, false, data.error);
-                showError(data.error);
+                uploadArea.querySelector('.upload-text').innerHTML = '点击或拖拽文件到此处上传<br><span style="font-size: 12px; opacity: 0.7;">支持 CSV 格式，最大 16MB</span>';
             }
-        } catch (error) {
-            updateFileItem(fileItem, file.name, false, '上传失败，请重试');
-            showError('网络错误，请重试');
         }
-    }
 
-    // 添加移动端检测
-    function isMobile() {
-        return window.innerWidth <= 768;
-    }
+        // 监听窗口大小变化
+        window.addEventListener('resize', adjustForDevice);
+        adjustForDevice();
 
-    // 根据设备类型调整界面
-    function adjustForDevice() {
-        if (isMobile()) {
-            uploadArea.querySelector('.upload-text').innerHTML = '点击上传文件<br><span style="font-size: 12px; opacity: 0.7;">支持 CSV 格式，最大 16MB</span>';
-        } else {
-            uploadArea.querySelector('.upload-text').innerHTML = '点击或拖拽文件到此处上传<br><span style="font-size: 12px; opacity: 0.7;">支持 CSV 格式，最大 16MB</span>';
-        }
-    }
-
-    // 监听窗口大小变化
-    window.addEventListener('resize', adjustForDevice);
-    adjustForDevice();
-
-    // 优化拖拽效果
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
-
-    uploadArea.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        handleFiles(files);
-    });
-
-    // 处理文件选择
-    fileInput.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
-    });
-
-    // 加载现有文件列表
-    loadExistingFiles();
-
-    function handleFiles(files) {
-        Array.from(files).forEach(file => {
-            if (file.name.endsWith('.csv')) {
-                uploadFile(file);
-            }
+        // 优化拖拽效果
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
         });
-    }
 
-    function loadExistingFiles() {
-        fetch('/api/files')
-            .then(response => response.json())
-            .then(data => {
-                data.files.forEach(file => {
-                    const fileItem = createFileItem(file.name, '已上传', true);
-                    fileList.appendChild(fileItem);
-                });
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        // 处理文件选择
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // 加载现有文件列表
+        loadExistingFiles();
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.name.endsWith('.csv')) {
+                    uploadFile(file);
+                }
             });
-    }
+        }
 
-    function createFileItem(filename, status, isSuccess = null) {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.innerHTML = `
+        function loadExistingFiles() {
+            fetch('/api/files')
+                .then(response => response.json())
+                .then(data => {
+                    data.files.forEach(file => {
+                        const fileItem = createFileItem(file.name, '已上传', true);
+                        fileList.appendChild(fileItem);
+                    });
+                });
+        }
+
+        function createFileItem(filename, status, isSuccess = null) {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
             <i class="fas fa-file-csv"></i>
             <span class="file-name">${filename}</span>
             <span class="file-status ${isSuccess === null ? '' : isSuccess ? 'status-success' : 'status-error'}">${status}</span>
@@ -623,117 +208,117 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             ` : ''}
         `;
-        return item;
-    }
-
-    function updateFileItem(item, filename, success, message) {
-        item.querySelector('.file-name').textContent = filename;
-        item.querySelector('.file-status').textContent = message;
-        item.querySelector('.file-status').className = `file-status ${success ? 'status-success' : 'status-error'}`;
-        
-        if (!item.querySelector('.delete-btn')) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.onclick = () => deleteFile(filename);
-            item.appendChild(deleteBtn);
+            return item;
         }
-    }
 
-    window.deleteFile = function(filename) {
-        if (confirm(`确定要删除文件 ${filename} 吗？`)) {
-            fetch(`/api/files/${filename}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const fileItems = fileList.getElementsByClassName('file-item');
-                    Array.from(fileItems).forEach(item => {
-                        if (item.querySelector('.file-name').textContent === filename) {
-                            item.remove();
+        function updateFileItem(item, filename, success, message) {
+            item.querySelector('.file-name').textContent = filename;
+            item.querySelector('.file-status').textContent = message;
+            item.querySelector('.file-status').className = `file-status ${success ? 'status-success' : 'status-error'}`;
+
+            if (!item.querySelector('.delete-btn')) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.onclick = () => deleteFile(filename);
+                item.appendChild(deleteBtn);
+            }
+        }
+
+        window.deleteFile = function (filename) {
+            if (confirm(`确定要删除文件 ${filename} 吗？`)) {
+                fetch(`/api/files/${filename}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const fileItems = fileList.getElementsByClassName('file-item');
+                            Array.from(fileItems).forEach(item => {
+                                if (item.querySelector('.file-name').textContent === filename) {
+                                    item.remove();
+                                }
+                            });
                         }
                     });
-                }
-            });
+            }
         }
-    }
 
-    // 修改计时器更新函数
-    function updateTimer() {
-        if (window.isRedirecting) return;
-        
-        fetch('/api/session/time_remaining')
-            .then(response => response.json())
-            .then(data => {
-                const timeDisplay = document.getElementById('timeRemaining');
-                
-                // 如果会话还未开始（没有上传文件）
-                if (!data.hasOwnProperty('remaining')) {
-                    timeDisplay.textContent = '--:--';
-                    return;
-                }
-                
-                const remaining = data.remaining;
-                if (remaining <= 0 || data.expired) {
-                    timeDisplay.textContent = '已过期';
-                    // 只在有文件的情况下才重定向
-                    if (localStorage.getItem('isUploading')) {
-                        window.isRedirecting = true;
-                        localStorage.removeItem('isUploading');
-                        window.location.href = '/';
+        // 修改计时器更新函数
+        function updateTimer() {
+            if (window.isRedirecting) return;
+
+            fetch('/api/session/time_remaining')
+                .then(response => response.json())
+                .then(data => {
+                    const timeDisplay = document.getElementById('timeRemaining');
+
+                    // 如果会话还未开始（没有上传文件）
+                    if (!data.hasOwnProperty('remaining')) {
+                        timeDisplay.textContent = '--:--';
+                        return;
                     }
-                    return;
-                }
-                
-                const minutes = Math.floor(remaining / 60);
-                const seconds = remaining % 60;
-                timeDisplay.textContent = 
-                    `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            });
-    }
-    
-    // 在文件上传成功时开始计时
-    function handleUploadSuccess() {
-        // 标记正在上传状态
-        localStorage.setItem('isUploading', 'true');
-        updateTimer();
-        setInterval(updateTimer, 1000);
-    }
 
-    // 在页面加载时检查是否需要开始计时
-    if (localStorage.getItem('isUploading')) {
-        updateTimer();
-        setInterval(updateTimer, 1000);
-    }
+                    const remaining = data.remaining;
+                    if (remaining <= 0 || data.expired) {
+                        timeDisplay.textContent = '已过期';
+                        // 只在有文件的情况下才重定向
+                        if (localStorage.getItem('isUploading')) {
+                            window.isRedirecting = true;
+                            localStorage.removeItem('isUploading');
+                            window.location.href = '/';
+                        }
+                        return;
+                    }
 
-    // 添加删除按钮事件处理
-    document.getElementById('deleteAllBtn').addEventListener('click', function() {
-        if (confirm('确定要删除所有账单数据吗？此操作不可恢复！')) {
-            fetch('/api/clear_data', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // 清除本地存储的上传状态
-                    localStorage.removeItem('isUploading');
-                    // 刷新文件列表
-                    fileList.innerHTML = '';
-                    // 重置计时器显示
-                    document.getElementById('timeRemaining').textContent = '--:--';
-                    // 显示成功提示
-                    showToast('所有数据已清除');
-                } else {
-                    showToast('删除失败：' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('删除失败，请重试');
-            });
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    timeDisplay.textContent =
+                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                });
         }
+
+        // 在文件上传成功时开始计时
+        function handleUploadSuccess() {
+            // 标记正在上传状态
+            localStorage.setItem('isUploading', 'true');
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // 在页面加载时检查是否需要开始计时
+        if (localStorage.getItem('isUploading')) {
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // 添加删除按钮事件处理
+        document.getElementById('deleteAllBtn').addEventListener('click', function () {
+            if (confirm('确定要删除所有账单数据吗？此操作不可恢复！')) {
+                fetch('/api/clear_data', {
+                    method: 'POST'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 清除本地存储的上传状态
+                            localStorage.removeItem('isUploading');
+                            // 刷新文件列表
+                            fileList.innerHTML = '';
+                            // 重置计时器显示
+                            document.getElementById('timeRemaining').textContent = '--:--';
+                            // 显示成功提示
+                            showToast('所有数据已清除');
+                        } else {
+                            showToast('删除失败：' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('删除失败，请重试');
+                    });
+            }
+        });
     });
-});
 </script>
-{% endblock %} 
+{% endblock %}

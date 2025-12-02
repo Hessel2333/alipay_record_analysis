@@ -1,762 +1,23 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>支付宝账单分析 - {% block title %}{% endblock %}</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- 添加全局 JavaScript 配置 -->
-    <script>
-        window.CATEGORY_COLORS = {
-            // 主要消费类别
-            '餐饮美食': '#FF3B30',      // Apple 红色
-            '酒店旅游': '#5856D6',      // Apple 紫色
-            '交通出行': '#007AFF',      // Apple 蓝色
-            '服饰装扮': '#FF9500',      // Apple 橙色
-            '日用百货': '#34C759',      // Apple 绿色
-            '数码电器': '#32ADE6',      // Apple 浅蓝色
-            
-            // 生活服务类
-            '生活服务': '#FF2D55',      // Apple 粉红色
-            '爱车养车': '#AF52DE',      // Apple 深紫色
-            '运动户外': '#FFD60A',      // Apple 金色
-            
-            // 文教娱乐类
-            '文化休闲': '#FF6B22',      // Apple 深橙色
-            '教育培训': '#64D2FF',      // Apple 天蓝色
-            
-            // 居家类
-            '家居家装': '#BF5AF2',      // Apple 亮紫色
-            '住房物业': '#AC8E68',      // Apple 棕色
-            
-            // 其他服务类
-            '医疗健康': '#30B0C7',      // Apple 青色
-            '充值缴费': '#66D4CF',      // Apple 薄荷绿
-            '公共服务': '#A7C538',      // Apple 草绿色
-            '商业服务': '#5E5CE6',      // Apple 靛蓝色
-            '信用借还': '#FF6482',      // Apple 玫瑰红
-            '母婴亲子': '#40C8E0',      // Apple 湖蓝色
-            
-            // 添加收入分类颜色
-            '收入': '#34C759',      // Apple 绿色
-            '转账红包': '#FF9500',      // Apple 橙色
-            '保险': '#007AFF',      // Apple 蓝色
-            '其他': '#FF3B30',      // Apple 红色
-            
-            // 默认类别
-            '其他': '#8E8E93'           // Apple 中性灰
-        };
 
-        window.getCategoryColor = function(category) {
-            return CATEGORY_COLORS[category] || CATEGORY_COLORS['其他'];
-        };
-    </script>
-
-    <style>
-        :root {
-            /* Apple Design 颜色方案 */
-            --sidebar-width: 240px;
-            --header-height: 60px;
-            --primary-color: #007AFF;  /* Apple 蓝 */
-            --bg-color: #F5F5F7;       /* Apple 浅灰背景 */
-            --card-bg: #FFFFFF;
-            --text-color: #1D1D1F;     /* Apple 深色文本 */
-            --secondary-text: #86868B;  /* Apple 次要文本 */
-            --border-color: #D2D2D7;   /* Apple 边框色 */
-            --hover-bg: #F5F5F7;       /* 悬停背景色 */
-
-            /* 添加 Apple Design 字体变量 */
-            --font-family-display: -apple-system, 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Arial, sans-serif;
-            --font-family-text: -apple-system, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', Arial, sans-serif;
-            --font-family-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
-
-            /* 添加分类颜色变量 */
-            --category-color-food: #FF6B6B;          /* 餐饮美食 - 红色 */
-            --category-color-shopping: #4ECDC4;      /* 日用百货 - 青色 */
-            --category-color-clothes: #45B7D1;       /* 服饰装扮 - 蓝色 */
-            --category-color-transport: #96CEB4;     /* 交通出行 - 绿色 */
-            --category-color-entertainment: #FFBE0B;  /* 休闲娱乐 - 黄色 */
-            --category-color-sports: #FF9B71;        /* 运动健身 - 橙色 */
-            --category-color-house: #6C5B7B;         /* 住房物业 - 紫色 */
-            --category-color-utilities: #355C7D;     /* 水电煤气 - 深蓝 */
-            --category-color-communication: #FECEAB; /* 通讯物流 - 粉色 */
-            --category-color-medical: #FF847C;       /* 医疗健康 - 红橙 */
-            --category-color-education: #E84A5F;     /* 文教娱乐 - 深红 */
-            --category-color-business: #2A363B;      /* 商业服务 - 深灰 */
-            --category-color-other: #99B898;         /* 其他 - 灰绿 */
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;  /* 字体平滑 */
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        body {
-            font-family: var(--font-family-text);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.47059;
-            font-weight: 400;
-            letter-spacing: -0.022em;
-        }
-
-        /* 大标题样式 */
-        h1, .page-title {
-            font-family: var(--font-family-display);
-            font-weight: 600;
-            letter-spacing: -0.025em;
-        }
-
-        /* 副标题样式 */
-        h2, h3, h4 {
-            font-family: var(--font-family-display);
-            font-weight: 500;
-            letter-spacing: -0.022em;
-        }
-
-        /* 修改主容器布局 */
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* 修改侧边栏样式 */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: var(--sidebar-width);
-            background: var(--card-bg);
-            border-right: 1px solid var(--border-color);
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .logo {
-            font-family: var(--font-family-display);
-            height: var(--header-height);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            font-size: 20px;
-            font-weight: 500;
-            letter-spacing: -0.025em;
-            color: var(--text-color);
-        }
-
-        .nav-menu {
-            padding: 8px 0;
-            flex: 1;
-        }
-
-        .nav-item {
-            padding: 12px 20px;
-            margin: 4px 8px;
-            display: flex;
-            align-items: center;
-            color: var(--text-color);
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: var(--font-family-text);
-            letter-spacing: -0.016em;
-        }
-
-        .nav-item:hover {
-            background: var(--hover-bg);
-            color: var(--primary-color);
-        }
-
-        .nav-item.active {
-            background: var(--hover-bg);
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        .nav-item i {
-            margin-right: 12px;
-            width: 20px;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        /* 修改主内容区域样式 */
-        .content {
-            flex: 1;  /* 让内容区域填充剩余空间 */
-            margin-left: var(--sidebar-width);  /* 为侧边栏留出空间 */
-            padding: 20px;
-            background: var(--bg-color);
-            min-height: 100vh;
-        }
-
-        /* 卡片样式 */
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-            margin-bottom: 24px;
-            padding: 24px;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 24px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-card h3 {
-            color: var(--secondary-text);
-            font-size: 14px;
-            font-weight: 400;
-            margin-bottom: 8px;
-        }
-
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: 500;
-            color: var(--text-color);
-            letter-spacing: -0.025em;
-        }
-
-        .stat-card .trend {
-            font-size: 13px;
-            margin-top: 8px;
-            color: var(--secondary-text);
-        }
-
-        .trend.up { color: #FF3B30; }   /* Apple 红色 */
-        .trend.down { color: #34C759; }  /* Apple 绿色 */
-
-        /* 图表容器样式 */
-        .chart-container {
-            width: 100%;
-            height: 400px;
-            margin-bottom: 24px;
-        }
-
-        /* 响应式调整 */
-        @media (max-width: 768px) {
-            .content {
-                margin-left: 60px;  /* 移动端侧边栏宽度 */
-            }
-        }
-
-        /* 修改悬浮菜单样式 */
-        .floating-menu {
-            position: fixed;
-            left: 0;
-            bottom: 24px;
-            width: var(--sidebar-width);  /* 与侧边栏宽度相同 */
-            padding: 0 12px;  /* 添加内边距以确保按钮不会贴边 */
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 1200;
-        }
-
-        .filter-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            background: var(--card-bg);
-            color: var(--text-color);
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .filter-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .filter-btn.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .filter-btn i {
-            font-size: 16px;
-        }
-
-        /* 数字和金额样式 */
-        .value, .amount {
-            font-family: var(--font-family-display);
-            font-feature-settings: "tnum";
-            letter-spacing: -0.025em;
-        }
-
-        /* 小号文本样式 */
-        .trend, .secondary-text, .table-filters {
-            font-family: var(--font-family-text);
-            font-size: 13px;
-            letter-spacing: -0.016em;
-        }
-
-        /* 等宽字体（用于数字展示） */
-        .monospace, .amount {
-            font-family: var(--font-family-mono);
-            font-feature-settings: "tnum";
-        }
-
-        /* 表格样式 */
-        table {
-            font-family: var(--font-family-text);
-            font-size: 13px;
-            letter-spacing: -0.016em;
-        }
-
-        /* 图表标题样式 */
-        .chart-title {
-            font-family: var(--font-family-display);
-            font-weight: 500;
-            letter-spacing: -0.022em;
-        }
-
-        /* 状态标签样式 */
-        .status-tag {
-            font-family: var(--font-family-text);
-            font-size: 12px;
-            letter-spacing: -0.016em;
-        }
-
-        /* 修改弹窗样式 */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1100;  /* 增加 z-index，确保高于导航栏 */
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-            width: 90%;
-            max-width: 1400px;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            margin-left: var(--sidebar-width);  /* 添加这行，为侧边栏留出空间 */
-            margin-right: 20px;  /* 添加这行，右侧留出一些空间 */
-        }
-
-        .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text-color);
-            margin: 0;
-            font-family: var(--font-family-display);
-        }
-
-        .modal-close {
-            border: none;
-            background: none;
-            font-size: 24px;
-            color: var(--secondary-text);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .modal-close:hover {
-            background: var(--hover-bg);
-        }
-
-        .modal-body {
-            padding: 24px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        /* 修改表格容器样式 */
-        .transaction-table {
-            width: 100%;
-            overflow-x: auto;  /* 添加横向滚动 */
-        }
-
-        .transaction-table table {
-            width: 100%;
-            border-collapse: collapse;
-            white-space: nowrap;  /* 防止内容换行 */
-        }
-
-        .transaction-table th,
-        .transaction-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .transaction-table th {
-            font-weight: 500;
-            color: var(--secondary-text);
-            background: var(--hover-bg);
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-
-        .transaction-table tr:hover {
-            background: var(--hover-bg);
-        }
-
-        .transaction-table .amount-column {
-            text-align: right;
-            font-family: var(--font-family-mono);
-        }
-
-        .transaction-table td:last-child {
-            text-align: right;
-            font-family: var(--font-family-mono);
-            font-feature-settings: "tnum";
-        }
-
-        /* 优化弹窗样式 */
-        .modal-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .sort-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .sort-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--card-bg);
-            color: var(--secondary-text);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .sort-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .sort-btn:hover:not(.active) {
-            background: var(--hover-bg);
-        }
-
-        /* 优化表格样式 */
-        .transaction-table th {
-            padding: 12px;
-            font-weight: 500;
-            color: var(--secondary-text);
-            background: var(--hover-bg);
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            text-align: left;
-            font-size: 13px;
-        }
-
-        .transaction-table th.sortable {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .transaction-table th.sortable:hover {
-            color: var(--primary-color);
-        }
-
-        .transaction-table th span {
-            margin-right: 4px;
-        }
-
-        .transaction-table th i {
-            font-size: 12px;
-            opacity: 0.5;
-        }
-
-        .transaction-table th.active {
-            color: var(--primary-color);
-        }
-
-        .transaction-table th.active i {
-            opacity: 1;
-        }
-
-        .transaction-table td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-        }
-
-        .time-column {
-            width: 180px;
-        }
-
-        .amount-column {
-            width: 120px;
-            text-align: right !important;
-        }
-
-        .transaction-table td:last-child {
-            text-align: right;
-            font-family: var(--font-family-mono);
-            font-feature-settings: "tnum";
-        }
-
-        th.sortable {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        th.sortable:hover {
-            background-color: var(--hover-bg);
-        }
-
-        th.sortable.active {
-            color: var(--primary-color);
-        }
-
-        th.sortable i {
-            margin-left: 4px;
-            font-size: 12px;
-        }
-
-        .amount-column {
-            text-align: right;
-        }
-
-        /* 添加提示框样式 */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            z-index: 1000;
-            display: none;
-        }
-
-        /* 全局加载状态样式 */
-        .global-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .loader-content {
-            text-align: center;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loader-text {
-            color: var(--text-color);
-            font-size: 14px;
-        }
-
-        /* 引导提示样式 */
-        .guide-tip {
-            position: fixed;
-            padding: 16px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 9998;
-            max-width: 300px;
-        }
-
-        .guide-text {
-            margin-bottom: 12px;
-            font-size: 14px;
-            line-height: 1.5;
-            color: var(--text-color);
-        }
-
-        .guide-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        .guide-next,
-        .guide-skip {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .guide-next {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .guide-skip {
-            background: var(--hover-bg);
-            color: var(--secondary-text);
-        }
-
-        /* 移动端优化 */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 60px;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .content {
-                margin-left: 0;
-                padding: 16px;
-            }
-
-            .nav-item span {
-                display: none;
-            }
-
-            .mobile-menu-toggle {
-                display: block;
-                position: fixed;
-                top: 16px;
-                left: 16px;
-                z-index: 1000;
-                padding: 8px;
-                background: white;
-                border-radius: 4px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-            .toast {
-                width: calc(100% - 32px);
-                left: 16px;
-                transform: none;
-            }
-        }
-
-        /* 错误提示样式 */
-        .error-message {
-            background: #FEE2E2;
-            border: 1px solid #FCA5A5;
-            color: #DC2626;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .error-message i {
-            font-size: 16px;
-        }
-
-        /* 移除之前的 container 样式 */
-        .container {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* 移除之前的 max-width 限制 */
-        .card, .stats-grid {
-            width: 100%;
-            box-sizing: border-box;
-        }
-    </style>
+    <!-- 引入全局样式 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- 引入全局 JavaScript 配置 -->
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     {% block head %}{% endblock %}
 </head>
+
 <body>
     <div class="app-container">
         <div class="sidebar">
             <div class="logo">
-                <i class="fas fa-chart-pie"></i>
+                <i class="fas fa-wallet" style="margin-right: 12px; color: var(--primary-color);"></i>
                 <span>账单分析</span>
             </div>
             <nav class="nav-menu">
@@ -772,7 +33,8 @@
                     <i class="fas fa-chart-line"></i>
                     <span>月度分析</span>
                 </a>
-                <a href="{{ url_for('category') }}" class="nav-item {% if active_page == 'category' %}active{% endif %}">
+                <a href="{{ url_for('category') }}"
+                    class="nav-item {% if active_page == 'category' %}active{% endif %}">
                     <i class="fas fa-tags"></i>
                     <span>分类分析</span>
                 </a>
@@ -780,15 +42,18 @@
                     <i class="fas fa-clock"></i>
                     <span>时间分析</span>
                 </a>
-                <a href="{{ url_for('insights') }}" class="nav-item {% if active_page == 'insights' %}active{% endif %}">
+                <a href="{{ url_for('insights') }}"
+                    class="nav-item {% if active_page == 'insights' %}active{% endif %}">
                     <i class="fas fa-project-diagram"></i>
                     <span>消费洞察</span>
                 </a>
-                <a href="{{ url_for('transactions') }}" class="nav-item {% if active_page == 'transactions' %}active{% endif %}">
+                <a href="{{ url_for('transactions') }}"
+                    class="nav-item {% if active_page == 'transactions' %}active{% endif %}">
                     <i class="fas fa-list"></i>
                     <span>交易记录</span>
                 </a>
-                <a href="{{ url_for('settings') }}" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
+                <a href="{{ url_for('settings') }}"
+                    class="nav-item {% if active_page == 'settings' %}active{% endif %}">
                     <i class="fas fa-cog"></i>
                     <span>设置</span>
                 </a>
@@ -878,453 +143,128 @@
 
     {% block scripts %}{% endblock %}
     <script>
-    // 修改显示弹窗函数
-    function showTransactionModal(title, transactions) {
-        const modal = document.getElementById('detailModal');
-        const modalTitle = modal.querySelector('.modal-title');
-        let currentSort = { field: 'time', direction: 'desc' };
-        let allTransactions = [...transactions];  // 保存所有交易记录的副本
-        let currentTransactions = [...transactions];
-        
-        // 日期时间格式化函数
-        function formatDateTime(dateStr) {
-            try {
-                // 处理不同的日期格式
-                let date;
-                if (typeof dateStr === 'string') {
-                    // 如果是 "YYYY-MM-DD HH:mm:ss" 格式
-                    if (dateStr.includes(':')) {
-                        date = new Date(dateStr);
-                    } 
-                    // 如果是 "YYYY-MM-DD" 格式
-                    else {
-                        date = new Date(dateStr + ' 00:00:00');
-                    }
-                } else {
-                    date = new Date(dateStr);
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let sessionCheckTimer = null;
+            const CHECK_INTERVAL = 15000; // 15秒
+
+            // 检查当前页面是否需要会话检查
+            function shouldCheckSession() {
+                const noCheckPaths = ['/', '/settings', '/index'];
+                return !noCheckPaths.includes(window.location.pathname);
+            }
+
+            async function checkSessionStatus() {
+                if (window.isRedirecting) {
+                    console.debug('Skipping check: redirecting');
+                    return;
                 }
 
-                // 检查日期是否有效
-                if (isNaN(date.getTime())) {
-                    throw new Error('Invalid date');
-                }
-
-                // 使用 Intl.DateTimeFormat 格式化日期
-                return new Intl.DateTimeFormat('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                }).format(date);
-            } catch (error) {
-                console.error('Date formatting error:', error);
-                return dateStr; // 如果格式化失败，返回原始字符串
-            }
-        }
-
-        function updateTable() {
-            const transactionList = document.getElementById('transactionList');
-            
-            // 排序逻辑
-            currentTransactions.sort((a, b) => {
-                if (currentSort.field === 'time') {
-                    const timeA = new Date(a.time);
-                    const timeB = new Date(b.time);
-                    return currentSort.direction === 'desc' ? timeB - timeA : timeA - timeB;
-                } else if (currentSort.field === 'amount') {
-                    return currentSort.direction === 'desc' ? 
-                        b.amount - a.amount : 
-                        a.amount - b.amount;
-                }
-                return 0;
-            });
-            
-            // 更新表格内容
-            transactionList.innerHTML = currentTransactions.map(t => `
-                <tr>
-                    <td>${formatDateTime(t.time)}</td>
-                    <td>${t.description}</td>
-                    <td>${t.category}</td>
-                    <td class="amount ${t.type === '收入' ? 'income' : 'expense'}">
-                        ${formatMoney(t.amount)} 元
-                    </td>
-                </tr>
-            `).join('');
-            
-            // 更新表头排序状态
-            modal.querySelectorAll('th.sortable').forEach(th => {
-                const sortField = th.dataset.sort;
-                const icon = th.querySelector('i');
-                if (sortField === currentSort.field) {
-                    th.classList.add('active');
-                    icon.className = `fas fa-sort-${currentSort.direction === 'desc' ? 'down' : 'up'}`;
-                } else {
-                    th.classList.remove('active');
-                    icon.className = 'fas fa-sort';
-                }
-            });
-
-            // 更新排序按钮状态
-            modal.querySelectorAll('.sort-btn').forEach(btn => {
-                const sortField = btn.dataset.sort;
-                btn.classList.toggle('active', sortField === currentSort.field);
-            });
-        }
-
-        // 添加金额筛选处理函数
-        function filterTransactions(filterType) {
-            if (filterType === 'all') {
-                currentTransactions = [...allTransactions];
-            } else if (filterType === 'large') {
-                currentTransactions = allTransactions.filter(t => t.amount >= 1000);
-            } else if (filterType === 'small') {
-                currentTransactions = allTransactions.filter(t => t.amount < 1000);
-            }
-            updateTable();
-        }
-
-        // 绑定金额筛选按钮事件
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // 更新按钮状态
-                document.querySelectorAll('.filter-btn').forEach(b => 
-                    b.classList.remove('active'));
-                this.classList.add('active');
-                
-                // 应用筛选
-                filterTransactions(this.dataset.filter);
-            });
-        });
-
-        modalTitle.textContent = title;
-        modal.style.display = 'flex';
-        
-        // 移除之前的事件监听器
-        const sortBtns = modal.querySelectorAll('.sort-btn');
-        const sortableHeaders = modal.querySelectorAll('th.sortable');
-        
-        // 清除之前的事件监听器
-        sortBtns.forEach(btn => {
-            btn.replaceWith(btn.cloneNode(true));
-        });
-        sortableHeaders.forEach(th => {
-            th.replaceWith(th.cloneNode(true));
-        });
-        
-        // 重新绑定排序按钮事件
-        modal.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const sortField = this.dataset.sort;
-                if (currentSort.field === sortField) {
-                    currentSort.direction = currentSort.direction === 'desc' ? 'asc' : 'desc';
-                } else {
-                    currentSort = { field: sortField, direction: 'desc' };
-                }
-                updateTable();
-            });
-        });
-        
-        // 重新绑定表头排序事件
-        modal.querySelectorAll('th.sortable').forEach(th => {
-            th.addEventListener('click', function() {
-                const sortField = this.dataset.sort;
-                if (currentSort.field === sortField) {
-                    currentSort.direction = currentSort.direction === 'desc' ? 'asc' : 'desc';
-                } else {
-                    currentSort = { field: sortField, direction: 'desc' };
-                }
-                updateTable();
-            });
-        });
-        
-        // 初始化表格
-        updateTable();
-    }
-
-    // 关闭弹窗
-    document.querySelector('.modal-close').addEventListener('click', function() {
-        document.getElementById('detailModal').style.display = 'none';
-    });
-
-    // 点击弹窗外部关闭
-    document.getElementById('detailModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.style.display = 'none';
-        }
-    });
-
-    // 添加键盘事件监听，按ESC关闭弹窗
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            document.getElementById('detailModal').style.display = 'none';
-        }
-    });
-
-    // 格式化时间
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-
-    // 显示提示信息
-    function showToast(message, duration = 3000) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.style.display = 'block';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, duration);
-    }
-
-    // 全局加载状态控制
-    const globalLoader = {
-        show: function(text = '加载中...') {
-            const loader = document.getElementById('globalLoader');
-            loader.querySelector('.loader-text').textContent = text;
-            loader.style.display = 'flex';
-        },
-        hide: function() {
-            document.getElementById('globalLoader').style.display = 'none';
-        }
-    };
-
-    // 引导提示控制
-    const guideTip = {
-        currentStep: 0,
-        steps: [],
-        
-        show: function(steps) {
-            this.steps = steps;
-            this.currentStep = 0;
-            this.showStep();
-        },
-        
-        showStep: function() {
-            if (this.currentStep >= this.steps.length) {
-                this.hide();
-                return;
-            }
-            
-            const step = this.steps[this.currentStep];
-            const tip = document.getElementById('guideTip');
-            const target = document.querySelector(step.target);
-            
-            if (!target) {
-                this.nextStep();
-                return;
-            }
-            
-            const rect = target.getBoundingClientRect();
-            tip.style.display = 'block';
-            tip.querySelector('.guide-text').textContent = step.text;
-            
-            // 计算提示框位置
-            const tipRect = tip.getBoundingClientRect();
-            let top = rect.bottom + 8;
-            let left = rect.left;
-            
-            // 确保提示框在可视区域内
-            if (top + tipRect.height > window.innerHeight) {
-                top = rect.top - tipRect.height - 8;
-            }
-            if (left + tipRect.width > window.innerWidth) {
-                left = window.innerWidth - tipRect.width - 16;
-            }
-            
-            tip.style.top = `${top}px`;
-            tip.style.left = `${left}px`;
-        },
-        
-        nextStep: function() {
-            this.currentStep++;
-            this.showStep();
-        },
-        
-        hide: function() {
-            document.getElementById('guideTip').style.display = 'none';
-        }
-    };
-
-    // 错误处理
-    function showError(message, container) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.innerHTML = `
-            <i class="fas fa-exclamation-circle"></i>
-            <span>${message}</span>
-        `;
-        
-        if (container) {
-            container.insertBefore(errorDiv, container.firstChild);
-        } else {
-            document.querySelector('.content').insertBefore(
-                errorDiv, 
-                document.querySelector('.content').firstChild
-            );
-        }
-        
-        setTimeout(() => {
-            errorDiv.remove();
-        }, 5000);
-    }
-
-    // 移动端菜单控制
-    function initMobileMenu() {
-        const toggle = document.createElement('button');
-        toggle.className = 'mobile-menu-toggle';
-        toggle.innerHTML = '<i class="fas fa-bars"></i>';
-        
-        toggle.addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-        
-        document.body.appendChild(toggle);
-    }
-
-    // 在移动端初始化菜单
-    if (window.innerWidth <= 768) {
-        initMobileMenu();
-    }
-
-    // 添加网络错误重试机制
-    async function fetchWithRetry(url, options = {}, retries = 3) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response;
-        } catch (error) {
-            if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                return fetchWithRetry(url, options, retries - 1);
-            }
-            throw error;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        let sessionCheckTimer = null;
-        const CHECK_INTERVAL = 15000; // 15秒
-        
-        // 检查当前页面是否需要会话检查
-        function shouldCheckSession() {
-            const noCheckPaths = ['/', '/settings', '/index'];
-            return !noCheckPaths.includes(window.location.pathname);
-        }
-        
-        async function checkSessionStatus() {
-            if (window.isRedirecting) {
-                console.debug('Skipping check: redirecting');
-                return;
-            }
-            
-            try {
-                console.debug('Performing session check');
-                const response = await fetch('/api/session/time_remaining');
-                const data = await response.json();
-                
-                const timeDisplay = document.getElementById('timeRemaining');
-                if (timeDisplay) {
-                    if (data.active) {
-                        const minutes = Math.floor(data.remaining / 60);
-                        const seconds = data.remaining % 60;
-                        timeDisplay.textContent = 
-                            `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                        
-                        if (data.warning) {
-                            timeDisplay.classList.add('warning');
-                            showToast('会话即将过期，请及时保存工作', 5000);
-                        }
-                    } else {
-                        timeDisplay.textContent = '--:--';
-                        if (window.location.pathname !== '/') {
-                            window.isRedirecting = true;
-                            window.location.href = '/';
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Session check error:', error);
-            }
-        }
-
-        // 启动会话检查
-        function startSessionCheck() {
-            // 先停止已存在的定时器
-            stopSessionCheck();
-            
-            // 只在需要检查的页面启动定时器
-            if (shouldCheckSession()) {
-                console.debug('Starting session check timer');
-                sessionCheckTimer = setInterval(checkSessionStatus, CHECK_INTERVAL);
-                // 立即执行一次检查
-                checkSessionStatus();
-            } else {
-                console.debug('Session check not needed for this page');
-            }
-        }
-
-        // 停止会话检查
-        function stopSessionCheck() {
-            if (sessionCheckTimer) {
-                console.debug('Stopping session check timer');
-                clearInterval(sessionCheckTimer);
-                sessionCheckTimer = null;
-            }
-        }
-
-        // 处理页面可见性变化
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                stopSessionCheck();
-            } else if (shouldCheckSession()) {
-                startSessionCheck();
-            }
-        });
-
-        // 处理页面卸载
-        window.addEventListener('beforeunload', function() {
-            stopSessionCheck();
-        });
-
-        // 处理手动删除
-        const deleteAllBtn = document.getElementById('deleteAllBtn');
-        if (deleteAllBtn) {
-            deleteAllBtn.addEventListener('click', async function() {
-                if (!confirm('确定要删除所有账单数据吗？此操作不可恢复！')) return;
-                
                 try {
-                    stopSessionCheck();  // 停止检查
-                    const response = await fetch('/api/clear_data', {
-                        method: 'POST'
-                    });
+                    console.debug('Performing session check');
+                    const response = await fetch('/api/session/time_remaining');
                     const data = await response.json();
-                    
-                    if (data.success) {
-                        window.location.href = '/';
-                    } else {
-                        showToast('删除失败：' + data.error);
-                        if (shouldCheckSession()) {
-                            startSessionCheck();  // 如果删除失败，重新启动检查
+
+                    const timeDisplay = document.getElementById('timeRemaining');
+                    if (timeDisplay) {
+                        if (data.active) {
+                            const minutes = Math.floor(data.remaining / 60);
+                            const seconds = data.remaining % 60;
+                            timeDisplay.textContent =
+                                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                            if (data.warning) {
+                                timeDisplay.classList.add('warning');
+                                showToast('会话即将过期，请及时保存工作', 5000);
+                            }
+                        } else {
+                            timeDisplay.textContent = '--:--';
+                            if (window.location.pathname !== '/') {
+                                window.isRedirecting = true;
+                                window.location.href = '/';
+                            }
                         }
                     }
                 } catch (error) {
-                    console.error('Error:', error);
-                    showToast('删除失败，请重试');
-                    if (shouldCheckSession()) {
-                        startSessionCheck();  // 如果发生错误，重新启动检查
-                    }
+                    console.error('Session check error:', error);
+                }
+            }
+
+            // 启动会话检查
+            function startSessionCheck() {
+                // 先停止已存在的定时器
+                stopSessionCheck();
+
+                // 只在需要检查的页面启动定时器
+                if (shouldCheckSession()) {
+                    console.debug('Starting session check timer');
+                    sessionCheckTimer = setInterval(checkSessionStatus, CHECK_INTERVAL);
+                    // 立即执行一次检查
+                    checkSessionStatus();
+                } else {
+                    console.debug('Session check not needed for this page');
+                }
+            }
+
+            // 停止会话检查
+            function stopSessionCheck() {
+                if (sessionCheckTimer) {
+                    console.debug('Stopping session check timer');
+                    clearInterval(sessionCheckTimer);
+                    sessionCheckTimer = null;
+                }
+            }
+
+            // 处理页面可见性变化
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) {
+                    stopSessionCheck();
+                } else if (shouldCheckSession()) {
+                    startSessionCheck();
                 }
             });
-        }
 
-        // 页面加载时启动检查
-        startSessionCheck();
-    });
+            // 处理页面卸载
+            window.addEventListener('beforeunload', function () {
+                stopSessionCheck();
+            });
+
+            // 处理手动删除
+            const deleteAllBtn = document.getElementById('deleteAllBtn');
+            if (deleteAllBtn) {
+                deleteAllBtn.addEventListener('click', async function () {
+                    if (!confirm('确定要删除所有账单数据吗？此操作不可恢复！')) return;
+
+                    try {
+                        stopSessionCheck();  // 停止检查
+                        const response = await fetch('/api/clear_data', {
+                            method: 'POST'
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            window.location.href = '/';
+                        } else {
+                            showToast('删除失败：' + data.error);
+                            if (shouldCheckSession()) {
+                                startSessionCheck();  // 如果删除失败，重新启动检查
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showToast('删除失败，请重试');
+                        if (shouldCheckSession()) {
+                            startSessionCheck();  // 如果发生错误，重新启动检查
+                        }
+                    }
+                });
+            }
+
+            // 页面加载时启动检查
+            startSessionCheck();
+        });
     </script>
 </body>
-</html> 
+
+</html>

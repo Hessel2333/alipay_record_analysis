@@ -14,12 +14,13 @@ from time import sleep
 import atexit
 import numpy as np
 from secrets import token_hex
+import itertools
 
 app = Flask(__name__)
 
 # 在 app 配置后添加
 app.config.update(
-    SESSION_COOKIE_SECURE=True,  # 只在 HTTPS 下发送 cookie
+    SESSION_COOKIE_SECURE=False,  # 本地开发环境设为 False
     SESSION_COOKIE_HTTPONLY=True,  # 防止 JavaScript 访问 cookie
     SESSION_COOKIE_SAMESITE='Lax',  # 防止 CSRF 攻击
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)  # 设置会话过期时间
@@ -250,6 +251,15 @@ def get_analysis():
         if year:
             df = df[df['交易时间'].dt.year == year]
         
+        # 添加金额筛选参数支持
+        min_amount = request.args.get('min_amount', type=float)
+        max_amount = request.args.get('max_amount', type=float)
+        
+        if min_amount:
+            df = df[df['金额'] >= min_amount]
+        if max_amount:
+            df = df[df['金额'] < max_amount]
+        
         # 商家分析
         merchant_analysis = analyze_merchants(df)
         
@@ -259,11 +269,32 @@ def get_analysis():
         # 消费习惯分析
         habit_analysis = analyze_habits(df)
         
+        # 高级洞察
+        latte_factor = analyze_latte_factor(df)
+        nighttime_analysis = analyze_nighttime_spending(df)
+        subscription_analysis = analyze_subscriptions(df)
+        inflation_analysis = analyze_inflation(df)
+        brand_loyalty = analyze_brand_loyalty(df)
+        
+        # Phase 2 洞察
+        sankey_data = analyze_sankey(df)
+        engel_coefficient = analyze_engel_coefficient(df)
+        weekend_monday = analyze_weekend_vs_monday(df)
+        story_data = generate_story_data(df)
+        
         # 智能标签
         tags = generate_smart_tags(df)
         
         # 分析支付方式
         payment_analysis = analyze_payment_methods(df)
+        
+        # 高级可视化图表数据
+        chord_data = generate_chord_data(df)
+        funnel_data = generate_funnel_data(df)
+        graph_data = generate_graph_data(df)
+        radar_data = generate_radar_data(df)
+        wordcloud_data = generate_wordcloud_data(df)
+        themeriver_data = generate_themeriver_data(df)
         
         return jsonify({
             'success': True,
@@ -271,8 +302,23 @@ def get_analysis():
                 'merchant_analysis': merchant_analysis,
                 'scenario_analysis': scenario_analysis,
                 'habit_analysis': habit_analysis,
+                'latte_factor': latte_factor,
+                'nighttime_analysis': nighttime_analysis,
+                'subscription_analysis': subscription_analysis,
+                'inflation_analysis': inflation_analysis,
+                'brand_loyalty': brand_loyalty,
+                'sankey_data': sankey_data,
+                'engel_coefficient': engel_coefficient,
+                'weekend_monday': weekend_monday,
+                'story_data': story_data,
                 'tags': tags,
-                'payment_analysis': payment_analysis
+                'payment_analysis': payment_analysis,
+                'chord_data': chord_data,
+                'funnel_data': funnel_data,
+                'graph_data': graph_data,
+                'radar_data': radar_data,
+                'wordcloud_data': wordcloud_data,
+                'themeriver_data': themeriver_data
             }
         })
         
@@ -449,9 +495,21 @@ def get_transactions():
         # 获取交易类型参数（收入/支出）
         type = request.args.get('type')
         
+        # 获取搜索参数
+        search_query = request.args.get('search')
+        
         # 应用筛选条件
         if type:
             df = df[df['收/支'] == type]  # 根据收入/支出类型筛选
+        
+        if search_query:
+            # 在商品说明、交易对方、交易分类中搜索
+            mask = (
+                df['商品说明'].astype(str).str.contains(search_query, case=False, na=False) |
+                df['交易对方'].astype(str).str.contains(search_query, case=False, na=False) |
+                df['交易分类'].astype(str).str.contains(search_query, case=False, na=False)
+            )
+            df = df[mask]
         
         if year:
             df = df[df['交易时间'].dt.year == year]
@@ -1059,86 +1117,47 @@ def get_monthly_data():
         
         # 只有当存在上月数据时才计算环比
         if not last_month_df.empty:
-            last_month_stats = calculate_monthly_stats(last_month_df)
+            last_stats = calculate_monthly_stats(last_month_df)
             
-            # 添加环比变化数据
-            balance_change_rate = calculate_change_rate(current_stats['balance'], last_month_stats['balance'])
-            expense_change_rate = calculate_change_rate(current_stats['total_expense'], last_month_stats['total_expense'])
-            income_change_rate = calculate_change_rate(current_stats['total_income'], last_month_stats['total_income'])
-            transaction_change_rate = calculate_change_rate(current_stats['total_count'], last_month_stats['total_count'])
+            # 计算各项指标的环比变化
+            comparisons = {}
+            for key in ['total_expense', 'total_income', 'balance']:
+                current_val = current_stats[key]
+                last_val = last_stats[key]
+                diff = current_val - last_val
+                rate = (diff / abs(last_val) * 100) if last_val != 0 else 0
+                comparisons[key] = {
+                    'diff': diff,
+                    'rate': rate
+                }
+            monthly_stats['comparisons'] = comparisons
             
-            monthly_stats.update({
-                'balance_change': float(current_stats['balance'] - last_month_stats['balance']),
-                'expense_change': float(current_stats['total_expense'] - last_month_stats['total_expense']),
-                'income_change': float(current_stats['total_income'] - last_month_stats['total_income']),
-                'transaction_change': int(current_stats['total_count'] - last_month_stats['total_count']),
-                'balance_change_rate': float(balance_change_rate) if balance_change_rate is not None else None,
-                'expense_change_rate': float(expense_change_rate) if expense_change_rate is not None else None,
-                'income_change_rate': float(income_change_rate) if income_change_rate is not None else None,
-                'transaction_change_rate': float(transaction_change_rate) if transaction_change_rate is not None else None
-            })
-        else:
-            monthly_stats.update({
-                'balance_change': None,
-                'expense_change': None,
-                'income_change': None,
-                'transaction_change': None,
-                'balance_change_rate': None,
-                'expense_change_rate': None,
-                'income_change_rate': None,
-                'transaction_change_rate': None
-            })
-        
-        # 获取当月的日期范围
-        month_dates = pd.date_range(
-            start=f"{current_year}-{current_month:02d}-01",
-            end=pd.Timestamp(f"{current_year}-{current_month:02d}-01") + pd.offsets.MonthEnd(1),
-            freq='D'
-        )
-        
-        # 创建日期索引的数据框
-        daily_stats = pd.DataFrame(index=month_dates.strftime('%Y-%m-%d'))
-        
-        # 计算每日支出和收入
-        expense_df = current_month_df[current_month_df['收/支'] == '支出']
-        income_df = current_month_df[current_month_df['收/支'] == '收入']
-        
-        daily_expense = expense_df.groupby('日期')['金额'].sum()
-        daily_income = income_df.groupby('日期')['金额'].sum()
-        
-        daily_stats['expense'] = daily_expense
-        daily_stats['income'] = daily_income
-        daily_stats = daily_stats.fillna(0)
-        
-        # 计算分类统计
-        category_stats = current_month_df[
-            (current_month_df['收/支'] == '支出') & 
-            (~current_month_df['是否退款'])
-        ].groupby('交易分类')['金额'].agg([
-            ('total', 'sum'),
-            ('count', 'count')
-        ]).round(2)
-        category_stats = category_stats.sort_values('total', ascending=False)
-        
         return jsonify({
-            'available_months': available_months,
-            'current_month': current_month_str,
-            'monthly_stats': monthly_stats,
-            'daily_data': {
-                'dates': daily_stats.index.tolist(),
-                'expenses': daily_stats['expense'].tolist(),
-                'incomes': daily_stats['income'].tolist()
-            },
-            'categories': {
-                'names': category_stats.index.tolist(),
-                'amounts': category_stats['total'].tolist(),
-                'counts': category_stats['count'].tolist()
-            }
+            'success': True,
+            'data': monthly_stats
         })
         
     except Exception as e:
-        logger.error(f"处理月度数据时出错: {str(e)}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error in monthly analysis: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/categories')
+def get_categories():
+    """获取所有交易分类"""
+    try:
+        df = load_alipay_data()
+        # 获取所有不为空的分类
+        categories = sorted(df['交易分类'].dropna().unique().tolist())
+        return jsonify({
+            'success': True,
+            'categories': categories
+        })
+    except Exception as e:
+        logger.error(f"Error getting categories: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 def calculate_monthly_stats(df):
     """计算月度统计数据"""
@@ -1801,14 +1820,15 @@ def analyze_merchants(df):
     
     merchant_stats.columns = ['交易次数', '总金额', '平均金额', '交易跨度']
     
-    # 识别常客商家(最近3个月有2次以上消费)
-    recent_date = df['交易时间'].max()
-    three_months_ago = recent_date - pd.Timedelta(days=90)
-    recent_df = expense_df[expense_df['交易时间'] >= three_months_ago]
-    
+    # 识别常客商家
+    # 如果是筛选后的数据（比如大额交易），则降低频次要求
+    min_count = 2
+    if len(df) < 50:  # 如果数据量较少（说明经过了筛选），则显示所有商家
+        min_count = 1
+        
     frequent_merchants = []
-    for merchant, group in recent_df.groupby('交易对方'):
-        if len(group) >= 2:
+    for merchant, group in expense_df.groupby('交易对方'):
+        if len(group) >= min_count:
             frequent_merchants.append({
                 'name': merchant,
                 'amount': group['金额'].sum(),
@@ -1821,7 +1841,7 @@ def analyze_merchants(df):
     
     return {
         'merchant_stats': merchant_stats.to_dict('index'),
-        'frequent_merchants': frequent_merchants[:10]  # 只返回前10个常客商家
+        'frequent_merchants': frequent_merchants[:20]  # 返回前20个
     }
 
 def analyze_scenarios(df):
@@ -1902,15 +1922,23 @@ def analyze_habits(df):
     weekend_expenses = expense_df[expense_df['交易时间'].dt.dayofweek.isin([5, 6])]['金额'].sum()
     weekend_ratio = float((weekend_expenses / expense_df['金额'].sum() * 100))
     
-    # 3. 计算固定支出比例
-    monthly_recurring = expense_df.groupby(['交易对方', expense_df['交易时间'].dt.month]).size()
-    recurring_merchants = monthly_recurring[monthly_recurring >= 2].index.get_level_values(0).unique()
+    # 3. 计算固定支出比例 (每月都有消费的商家)
+    # 按月份和商家分组统计
+    monthly_merchant_counts = expense_df.groupby(['交易对方', expense_df['交易时间'].dt.to_period('M')]).size()
+    # 计算每个商家出现的月份数
+    merchant_months = monthly_merchant_counts.reset_index().groupby('交易对方').size()
+    # 获取总月份数
+    total_months = len(expense_df['交易时间'].dt.to_period('M').unique())
+    
+    # 如果商家出现的月份数占比超过 80%，则视为固定支出
+    recurring_merchants = merchant_months[merchant_months >= max(2, total_months * 0.8)].index
+    
     fixed_expenses = expense_df[expense_df['交易对方'].isin(recurring_merchants)]['金额'].sum()
-    fixed_ratio = float((fixed_expenses / expense_df['金额'].sum() * 100))
+    fixed_ratio = float((fixed_expenses / expense_df['金额'].sum() * 100)) if expense_df['金额'].sum() > 0 else 0
     
     # 4. 计算月初消费比例
     month_start = expense_df[expense_df['交易时间'].dt.day <= 5]['金额'].sum()
-    month_start_ratio = float((month_start / expense_df['金额'].sum() * 100))
+    month_start_ratio = float((month_start / expense_df['金额'].sum() * 100)) if expense_df['金额'].sum() > 0 else 0
     
     return {
         'daily_avg': round(daily_avg, 2),
@@ -1918,6 +1946,320 @@ def analyze_habits(df):
         'weekend_ratio': round(weekend_ratio, 1),
         'fixed_expenses': round(fixed_ratio, 1),
         'month_start_ratio': round(month_start_ratio, 1)
+    }
+
+    
+    return {
+        'daily_avg': round(daily_avg, 2),
+        'active_days': active_days,
+        'weekend_ratio': round(weekend_ratio, 1),
+        'fixed_expenses': round(fixed_ratio, 1),
+        'month_start_ratio': round(month_start_ratio, 1)
+    }
+
+def analyze_latte_factor(df):
+    """拿铁因子分析：小额高频支出"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    # 定义小额：小于 30 元
+    small_expenses = expense_df[expense_df['金额'] < 30]
+    
+    # 按商家分组统计频次
+    merchant_counts = small_expenses.groupby('交易对方').size()
+    
+    # 筛选高频：月均超过 5 次 (简单起见，这里用总次数 > 5)
+    # 更好的做法是计算月均，但为了演示效果，先用总次数
+    frequent_merchants = merchant_counts[merchant_counts > 5].index
+    
+    latte_df = small_expenses[small_expenses['交易对方'].isin(frequent_merchants)]
+    
+    total_amount = latte_df['金额'].sum()
+    item_count = len(latte_df)
+    
+    # 找出最典型的“拿铁”商家（次数最多）
+    top_merchant = merchant_counts.idxmax() if not merchant_counts.empty else "未知"
+    
+    return {
+        'total_amount': float(total_amount),
+        'item_count': int(item_count),
+        'top_merchant': top_merchant,
+        'avg_price': float(total_amount / item_count) if item_count > 0 else 0
+    }
+
+def analyze_nighttime_spending(df):
+    """深夜消费分析：22:00 - 04:00"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    # 筛选深夜时段
+    # 22:00 - 23:59 OR 00:00 - 04:00
+    night_mask = (expense_df['交易时间'].dt.hour >= 22) | (expense_df['交易时间'].dt.hour <= 4)
+    night_df = expense_df[night_mask]
+    
+    total_night_spend = night_df['金额'].sum()
+    total_spend = expense_df['金额'].sum()
+    
+    # 深夜最常光顾的商家
+    top_merchant = "无"
+    if not night_df.empty:
+        top_merchant = night_df.groupby('交易对方')['金额'].sum().idxmax()
+        
+    return {
+        'total_amount': float(total_night_spend),
+        'ratio': float((total_night_spend / total_spend * 100)) if total_spend > 0 else 0,
+        'count': len(night_df),
+        'top_merchant': top_merchant
+    }
+
+def analyze_subscriptions(df):
+    """隐形订阅分析：每月固定扣款"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    # 按商家和月份分组，计算每月金额
+    monthly_spend = expense_df.groupby(['交易对方', expense_df['交易时间'].dt.to_period('M')])['金额'].sum().reset_index()
+    
+    # 计算每个商家的月均金额标准差，如果标准差很小，说明金额固定
+    merchant_stats = monthly_spend.groupby('交易对方')['金额'].agg(['mean', 'std', 'count'])
+    
+    # 筛选：出现月份数 > 3 且 金额标准差 < 5 (金额基本固定)
+    subs_merchants = merchant_stats[
+        (merchant_stats['count'] >= 3) & 
+        (merchant_stats['std'] < 5)
+    ]
+    
+    subscriptions = []
+    for merchant in subs_merchants.index:
+        avg_amount = merchant_stats.loc[merchant, 'mean']
+        subscriptions.append({
+            'name': merchant,
+            'monthly_amount': float(avg_amount),
+            'annual_amount': float(avg_amount * 12)
+        })
+        
+    # 按年化金额排序
+    subscriptions.sort(key=lambda x: x['annual_amount'], reverse=True)
+    
+    return subscriptions
+
+def analyze_inflation(df):
+    """个人通胀率：客单价变化"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    # 按季度分组
+    expense_df['quarter'] = expense_df['交易时间'].dt.to_period('Q')
+    
+    quarterly_avg = expense_df.groupby('quarter')['金额'].mean()
+    
+    if len(quarterly_avg) < 2:
+        return {'trend': 'stable', 'rate': 0}
+        
+    first_q = quarterly_avg.iloc[0]
+    last_q = quarterly_avg.iloc[-1]
+    
+    rate = ((last_q - first_q) / first_q * 100) if first_q > 0 else 0
+    
+    return {
+        'trend': 'up' if rate > 5 else ('down' if rate < -5 else 'stable'),
+        'rate': float(rate),
+        'first_avg': float(first_q),
+        'last_avg': float(last_q)
+    }
+
+def analyze_brand_loyalty(df):
+    """品牌忠诚度分析"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return None
+        
+    # 消费金额最高的商家
+    top_amount_merchant = expense_df.groupby('交易对方')['金额'].sum().idxmax()
+    top_amount = expense_df.groupby('交易对方')['金额'].sum().max()
+    
+    # 消费次数最多的商家
+    top_count_merchant = expense_df.groupby('交易对方').size().idxmax()
+    top_count = expense_df.groupby('交易对方').size().max()
+    
+    return {
+        'top_amount': {
+            'name': top_amount_merchant,
+            'value': float(top_amount)
+        },
+        'top_count': {
+            'name': top_count_merchant,
+            'value': int(top_count)
+        }
+    }
+
+def analyze_sankey(df):
+    """生成桑基图数据：总支出 -> 分类 -> Top商家"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return {'nodes': [], 'links': []}
+        
+    nodes = []
+    links = []
+    node_names = set()
+    
+    # 根节点
+    root_name = "总支出"
+    nodes.append({'name': root_name})
+    node_names.add(root_name)
+    
+    # 第一层：分类
+    # 取前 8 大分类，其他的归为"其他"
+    cat_stats = expense_df.groupby('交易分类')['金额'].sum().sort_values(ascending=False)
+    top_cats = cat_stats.head(8)
+    other_cats_amount = cat_stats.iloc[8:].sum()
+    
+    for cat, amount in top_cats.items():
+        if cat not in node_names:
+            nodes.append({'name': cat})
+            node_names.add(cat)
+        links.append({
+            'source': root_name,
+            'target': cat,
+            'value': float(amount)
+        })
+        
+        # 第二层：该分类下的 Top 3 商家
+        cat_df = expense_df[expense_df['交易分类'] == cat]
+        merchant_stats = cat_df.groupby('交易对方')['金额'].sum().sort_values(ascending=False).head(3)
+        
+        for merchant, m_amount in merchant_stats.items():
+            # 商家名字可能重复（不同分类下），为了桑基图节点唯一，可以加后缀或处理
+            # 这里简单处理：如果商家名已存在（比如作为分类名），加个空格
+            m_node_name = merchant
+            while m_node_name in node_names:
+                m_node_name += " "
+            
+            nodes.append({'name': m_node_name})
+            node_names.add(m_node_name)
+            
+            links.append({
+                'source': cat,
+                'target': m_node_name,
+                'value': float(m_amount)
+            })
+            
+    if other_cats_amount > 0:
+        other_name = "其他分类"
+        nodes.append({'name': other_name})
+        links.append({
+            'source': root_name,
+            'target': other_name,
+            'value': float(other_cats_amount)
+        })
+        
+    return {'nodes': nodes, 'links': links}
+
+def analyze_engel_coefficient(df):
+    """恩格尔系数分析 (食品支出占比)"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    total_expense = expense_df['金额'].sum()
+    
+    if total_expense == 0:
+        return {'ratio': 0, 'amount': 0}
+        
+    # 定义食品相关关键词
+    food_keywords = ['餐饮', '食品', '美食', '超市', '外卖', '菜市场']
+    
+    # 筛选食品类消费
+    # 假设 '交易分类' 或 '商品说明' 中包含关键词
+    # 这里主要基于 '交易分类'，如果分类不准，可以结合 '交易对方'
+    food_mask = expense_df['交易分类'].str.contains('|'.join(food_keywords), na=False)
+    food_expense = expense_df[food_mask]['金额'].sum()
+    
+    ratio = (food_expense / total_expense * 100)
+    
+    return {
+        'ratio': float(ratio),
+        'amount': float(food_expense)
+    }
+
+def analyze_weekend_vs_monday(df):
+    """周末效应 vs 周一综合症"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    # 周末 (周六=5, 周日=6)
+    weekend_df = expense_df[expense_df['交易时间'].dt.dayofweek.isin([5, 6])]
+    # 周一 (0)
+    monday_df = expense_df[expense_df['交易时间'].dt.dayofweek == 0]
+    
+    # 计算日均消费
+    # 注意：要除以实际出现的天数，而不是简单的总天数
+    weekend_days = len(weekend_df['交易时间'].dt.date.unique())
+    monday_days = len(monday_df['交易时间'].dt.date.unique())
+    
+    weekend_avg = weekend_df['金额'].sum() / max(1, weekend_days)
+    monday_avg = monday_df['金额'].sum() / max(1, monday_days)
+    
+    return {
+        'weekend_avg': float(weekend_avg),
+        'monday_avg': float(monday_avg),
+        'ratio': float(weekend_avg / monday_avg) if monday_avg > 0 else 0
+    }
+
+def generate_story_data(df):
+    """生成年度账单故事数据"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return None
+        
+    # 1. 最贵的一天
+    daily_sum = expense_df.groupby(expense_df['交易时间'].dt.date)['金额'].sum()
+    max_day = daily_sum.idxmax()
+    max_day_amount = daily_sum.max()
+    
+    # 2. 消费最高的一个月
+    monthly_sum = expense_df.groupby(expense_df['交易时间'].dt.to_period('M'))['金额'].sum()
+    max_month = monthly_sum.idxmax()
+    max_month_amount = monthly_sum.max()
+    
+    # 3. 最晚的一笔消费
+    # 提取时间部分
+    expense_df['time_only'] = expense_df['交易时间'].dt.time
+    # 排序找最晚 (注意：跨夜的凌晨消费其实算"早"，这里简单找 23:59 附近的)
+    # 或者找凌晨 00:00 - 05:00 之间的
+    late_night_df = expense_df[(expense_df['交易时间'].dt.hour >= 0) & (expense_df['交易时间'].dt.hour <= 4)]
+    if not late_night_df.empty:
+        latest_tx = late_night_df.sort_values('time_only', ascending=False).iloc[0]
+    else:
+        # 如果没有凌晨消费，找晚上最晚的
+        latest_tx = expense_df.sort_values('time_only', ascending=False).iloc[0]
+        
+    # 4. 消费最多的分类
+    top_cat = expense_df.groupby('交易分类')['金额'].sum().idxmax()
+    top_cat_amount = expense_df.groupby('交易分类')['金额'].sum().max()
+    
+    # 5. 全年总览
+    total_days = (expense_df['交易时间'].max() - expense_df['交易时间'].min()).days + 1
+    total_tx_count = len(expense_df)
+    
+    return {
+        'max_day': {
+            'date': max_day.strftime('%Y年%m月%d日'),
+            'amount': float(max_day_amount)
+        },
+        'max_month': {
+            'month': str(max_month),
+            'amount': float(max_month_amount)
+        },
+        'latest_tx': {
+            'time': latest_tx['交易时间'].strftime('%H:%M'),
+            'merchant': latest_tx['交易对方'],
+            'amount': float(latest_tx['金额'])
+        },
+        'top_category': {
+            'name': top_cat,
+            'amount': float(top_cat_amount)
+        },
+        'summary': {
+            'total_days': int(total_days),
+            'tx_count': int(total_tx_count),
+            'total_amount': float(expense_df['金额'].sum())
+        }
     }
 
 def generate_smart_tags(df):
@@ -2204,6 +2546,210 @@ def ensure_upload_dir():
 
 # 在应用启动时调用
 ensure_upload_dir()
+
+# ============ 高级可视化图表数据生成函数 ============
+
+def generate_chord_data(df):
+    """生成和弦图数据（星期 -> 消费分类流向）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return {'nodes': [], 'links': []}
+    
+    # 星期映射
+    weekday_map = {
+        0: '周一', 1: '周二', 2: '周三', 3: '周四', 4: '周五', 5: '周六', 6: '周日'
+    }
+    expense_df['weekday'] = expense_df['交易时间'].dt.dayofweek.map(weekday_map)
+    
+    # 取 Top 8 分类
+    top_categories = expense_df.groupby('交易分类')['金额'].sum().nlargest(8).index.tolist()
+    
+    # 统计 星期 -> 分类 的流量
+    # 只统计 Top 分类
+    flow_df = expense_df[expense_df['交易分类'].isin(top_categories)]
+    flow_data = flow_df.groupby(['weekday', '交易分类'])['金额'].sum()
+    
+    nodes = []
+    links = []
+    
+    # 添加星期节点
+    weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    for day in weekdays:
+        nodes.append({'name': day, 'category': 'weekday'})
+        
+    # 添加分类节点
+    for cat in top_categories:
+        nodes.append({'name': cat, 'category': 'category'})
+        
+    # 构建连线
+    for (day, cat), amount in flow_data.items():
+        if amount > 0:
+            links.append({
+                'source': day,
+                'target': cat,
+                'value': float(amount)
+            })
+            
+    return {
+        'nodes': nodes,
+        'links': links
+    }
+
+def generate_funnel_data(df):
+    """生成漏斗图数据（按金额区间）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return []
+    
+    bins = [0, 50, 100, 500, 1000, 5000, float('inf')]
+    labels = ['0-50元', '50-100元', '100-500元', '500-1000元', '1000-5000元', '>5000元']
+    
+    expense_df['amount_range'] = pd.cut(expense_df['金额'], bins=bins, labels=labels, right=False)
+    
+    # 统计各区间总金额
+    funnel_data = expense_df.groupby('amount_range')['金额'].sum().reset_index()
+    
+    result = []
+    for _, row in funnel_data.iterrows():
+        result.append({
+            'name': row['amount_range'],
+            'value': float(row['金额'])
+        })
+        
+    # 按金额排序
+    result.sort(key=lambda x: x['value'], reverse=True)
+    return result
+
+def generate_graph_data(df):
+    """生成矩形树图数据（消费分类 -> 头部商家）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return []
+    
+    # 取 Top 8 分类
+    top_categories = expense_df.groupby('交易分类')['金额'].sum().nlargest(8).index.tolist()
+    
+    data = []
+    
+    for cat in top_categories:
+        cat_amount = expense_df[expense_df['交易分类'] == cat]['金额'].sum()
+        
+        # 对每个分类，取 Top 10 商家
+        cat_df = expense_df[expense_df['交易分类'] == cat]
+        top_merchants = cat_df.groupby('交易对方')['金额'].sum().nlargest(10)
+        
+        children = []
+        for merchant, amount in top_merchants.items():
+            children.append({
+                'name': merchant,
+                'value': float(amount)
+            })
+            
+        data.append({
+            'name': cat,
+            'value': float(cat_amount),
+            'children': children
+        })
+            
+    return data
+
+def generate_radar_data(df):
+    """生成雷达图数据（季度消费结构对比）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return {'indicator': [], 'series': []}
+    
+    # 获取Top 6分类作为维度
+    top_categories = expense_df.groupby('交易分类')['金额'].sum().nlargest(6).index.tolist()
+    
+    if not top_categories:
+        return {'indicator': [], 'series': []}
+        
+    # 按季度分组
+    expense_df['quarter'] = expense_df['交易时间'].dt.quarter
+    quarters = sorted(expense_df['quarter'].unique())
+    
+    series_data = []
+    max_val = 0
+    
+    for q in quarters:
+        q_df = expense_df[expense_df['quarter'] == q]
+        values = []
+        for cat in top_categories:
+            val = float(q_df[q_df['交易分类'] == cat]['金额'].sum())
+            values.append(val)
+            max_val = max(max_val, val)
+            
+        series_data.append({
+            'name': f'Q{q}',
+            'value': values
+        })
+        
+    indicator = [{'name': c, 'max': max_val * 1.1} for c in top_categories]
+    
+    return {'indicator': indicator, 'series': series_data}
+
+def generate_wordcloud_data(df):
+    """生成词云数据"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return []
+        
+    # 统计商家频次和金额
+    merchant_stats = expense_df.groupby('交易对方').agg({
+        '金额': 'sum',
+        '交易对方': 'count'
+    }).rename(columns={'交易对方': 'count'})
+    
+    # 归一化权重: 结合频次和金额
+    # 简单起见，直接使用金额作为权重，或者两者结合
+    data = []
+    for merchant, row in merchant_stats.iterrows():
+        # 过滤掉金额太小的
+        if row['金额'] > 10:
+            data.append({
+                'name': merchant,
+                'value': float(row['金额'])
+            })
+            
+    # 按权重排序取Top 100
+    data.sort(key=lambda x: x['value'], reverse=True)
+    return data[:100]
+
+def generate_themeriver_data(df):
+    """生成河流图数据（按月统计各分类消费）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return {'categories': [], 'data': []}
+    
+    # 取Top 8 分类
+    top_categories = expense_df.groupby('交易分类')['金额'].sum()\
+                               .nlargest(8).index.tolist()
+    
+    # 按月份和分类聚合
+    expense_df['month'] = expense_df['交易时间'].dt.to_period('M').astype(str)
+    
+    # 获取所有月份
+    all_months = sorted(expense_df['month'].unique())
+    
+    data = []
+    for month in all_months:
+        month_df = expense_df[expense_df['month'] == month]
+        for category in top_categories:
+            amount = month_df[month_df['交易分类'] == category]['金额'].sum()
+            # 即使金额为0也添加，确保河流图连续
+            data.append([month, category, float(amount)])
+    
+    return {
+        'categories': top_categories,
+        'data': data
+    }
 
 if __name__ == '__main__':
     # 判断是否在生产环境
