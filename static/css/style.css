@@ -54,6 +54,17 @@
     /* 商业服务 - 深灰 */
     --category-color-other: #99B898;
     /* 其他 - 灰绿 */
+
+    /* 标准化阴影变量 */
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-float: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+    /* 标准化圆角变量 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
 }
 
 * {
@@ -138,7 +149,7 @@ h4 {
     color: var(--text-color);
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
     font-family: var(--font-family-text);
     letter-spacing: -0.016em;
@@ -194,8 +205,8 @@ h4 {
 .card,
 .chart-card {
     background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
     margin-bottom: 24px;
     padding: 24px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -207,7 +218,7 @@ h4 {
 .card:hover,
 .chart-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-hover);
 }
 
 .stats-grid {
@@ -222,8 +233,8 @@ h4 {
 .stat-card {
     background: var(--card-bg);
     padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -274,7 +285,7 @@ h4 {
     width: 100%;
     height: 400px;
     margin-bottom: 24px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 
@@ -285,12 +296,16 @@ h4 {
     align-items: center;
 }
 
+/* 统一卡片标题样式 */
+.card-title,
 .chart-title {
     font-family: var(--font-family-display);
-    font-weight: 500;
-    letter-spacing: -0.022em;
-    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-size: 18px;
+    /* 统一调整为 18px */
     color: var(--text-color);
+    margin: 0;
 }
 
 .chart-title-row {
@@ -335,7 +350,7 @@ h4 {
         padding: 8px;
         background: white;
         border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-float);
     }
 
     .toast {
@@ -366,19 +381,19 @@ h4 {
     gap: 8px;
     padding: 12px;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: var(--card-bg);
     color: var(--text-color);
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
     width: 100%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-float);
 }
 
 .filter-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-hover);
 }
 
 .filter-btn.active {
@@ -445,7 +460,7 @@ table {
 
 .modal-content {
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     width: 90%;
     max-width: 1400px;
@@ -635,7 +650,7 @@ table {
     background: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 12px 24px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
     z-index: 1000;
     display: none;
@@ -686,8 +701,8 @@ table {
     position: fixed;
     padding: 16px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-hover);
     z-index: 9998;
     max-width: 300px;
 }
@@ -730,7 +745,7 @@ table {
     border: 1px solid #FCA5A5;
     color: #DC2626;
     padding: 12px 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin-bottom: 16px;
     font-size: 14px;
     display: flex;
@@ -900,7 +915,7 @@ table {
 
 .feature-card {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     text-align: left;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -933,7 +948,7 @@ table {
 
 .upload-section {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 32px;
     margin-bottom: 48px;
     text-align: center;
@@ -967,7 +982,7 @@ table {
 
 .settings-page .privacy-notice {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -1017,7 +1032,7 @@ table {
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
@@ -1045,7 +1060,7 @@ table {
 
 .file-upload {
     border: 2px dashed var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 32px;
     text-align: center;
     cursor: pointer;
@@ -1091,7 +1106,7 @@ table {
     align-items: center;
     padding: 12px;
     background: var(--hover-bg);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin-bottom: 8px;
 }
 
@@ -1144,7 +1159,7 @@ table {
 
 .upload-guide {
     background: var(--hover-bg);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 16px;
     margin-bottom: 24px;
 }
@@ -1232,7 +1247,7 @@ table {
 .session-timer {
     background: var(--hover-bg);
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -1250,7 +1265,7 @@ table {
     border: 1px solid #BAE3FF;
     color: #0066CC;
     padding: 16px 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     margin: 20px 0 24px 0;
     font-size: 15px;
     display: flex;
@@ -1313,7 +1328,7 @@ table {
 
 .delete-section {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -1329,7 +1344,7 @@ table {
 .delete-area {
     padding: 16px;
     background: #FEF2F2;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     border: 1px solid #FCA5A5;
 }
 
@@ -1338,7 +1353,7 @@ table {
     color: white;
     border: none;
     padding: 12px 24px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
     cursor: pointer;
     display: flex;
@@ -1408,7 +1423,7 @@ table {
     left: 0;
     margin-top: 8px;
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 16px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     width: max-content;
@@ -1430,12 +1445,14 @@ table {
     padding: 4px;
     border-radius: 10px;
     gap: 4px;
+    justify-self: end;
+    /* 靠右对齐 */
 }
 
 .range-btn {
     padding: 6px 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--secondary-text);
     font-size: 13px;
@@ -1459,7 +1476,8 @@ table {
 /* 页面布局样式 - 4列布局 */
 .category-page-header {
     display: grid;
-    grid-template-columns: auto minmax(auto, 300px) auto minmax(auto, 300px);
+    /* 改为3列布局：左侧(标题+分类) 中间(年份) 右侧(范围切换) */
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 24px;
     padding: 20px;
@@ -1473,10 +1491,15 @@ table {
     background-color: rgba(245, 245, 247, 0.8);
 }
 
-/* 分类选择器居中 */
+/* 头部左侧容器 */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+/* 分类选择器 */
 .category-selector {
-    justify-self: center;
-    /* 在第二列中居中 */
     position: relative;
     min-width: 160px;
     height: 36px;
@@ -1522,10 +1545,12 @@ table {
 .category-expanded {
     position: absolute;
     top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%) translateY(0);
+    top: calc(100% + 8px);
+    /* 改为左对齐，避免向左延伸被侧边栏挡住 */
+    left: 0;
+    transform: none;
     background: var(--bg-color);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 16px;
     opacity: 0;
     pointer-events: none;
@@ -1558,17 +1583,20 @@ table {
 /* 展开面板中的分类网格 */
 .category-expanded .category-pills {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    /* 改为固定4列，宽度更紧凑 */
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     width: max-content;
-    max-width: 800px;
+    max-width: 500px;
 }
 
+/* 当父容器被hover时显示展开面板 */
 /* 当父容器被hover时显示展开面板 */
 .category-selector:hover .category-expanded {
     opacity: 1;
     pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
+    /* 对应上面的修改，取消 transform */
+    transform: none;
     display: block;
 }
 
@@ -1634,7 +1662,7 @@ table {
     /* 在第四列中靠右对齐 */
     display: flex;
     background: var(--hover-bg);
-    border-radius: 24px;
+    border-radius: var(--radius-xl);
     padding: 3px;
     gap: 0;
     /* Reset gap */
@@ -1738,7 +1766,7 @@ table {
 
 .analysis-card {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     height: 480px;
@@ -1760,7 +1788,7 @@ table {
 
 .merchant-item {
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
@@ -1908,7 +1936,7 @@ table {
     align-items: flex-start;
     gap: 10px;
     padding: 14px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: var(--hover-bg);
     margin-bottom: 10px;
     transition: all 0.2s ease;
@@ -1925,7 +1953,7 @@ table {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--primary-color);
     color: white;
     flex-shrink: 0;
@@ -1966,15 +1994,15 @@ table {
 .habit-stats {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    padding: 24px;
+    gap: 12px;
+    padding: 16px;
 }
 
 .habit-stats .stat-item {
     text-align: center;
-    padding: 24px;
+    padding: 16px;
     background: var(--hover-bg);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     transition: all 0.2s ease;
     border: 1px solid var(--border-color);
     position: relative;
@@ -1986,13 +2014,13 @@ table {
 }
 
 .habit-stats .stat-value {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .habit-stats .stat-label {
-    font-size: 15px;
+    font-size: 13px;
     color: var(--secondary-text);
     display: flex;
     align-items: center;
@@ -2057,7 +2085,7 @@ table {
 /* 高级洞察样式 */
 .advanced-insights-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
     margin-top: 24px;
     grid-column: 1 / -1;
@@ -2066,7 +2094,7 @@ table {
 
 .insight-card {
     height: auto;
-    min-height: 200px;
+    min-height: 160px;
     background: var(--card-bg);
 }
 
@@ -2112,41 +2140,52 @@ table {
     gap: 8px;
 }
 
-.insight-item {
+.loyalty-row {
     display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    color: var(--text-secondary);
-    padding-bottom: 4px;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.loyalty-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 12px;
     border-bottom: 1px dashed var(--border-color);
+}
+
+.loyalty-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
 }
 
 .loyalty-item {
     margin-bottom: 12px;
 }
 
-.loyalty-label {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-bottom: 2px;
+.loyalty-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.loyalty-value {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 15px;
-}
-
-.loyalty-sub {
-    font-size: 12px;
+.loyalty-amount {
+    font-size: 13px;
     color: var(--primary-color);
+    font-weight: 600;
 }
 
-.loyalty-divider {
-    height: 1px;
-    background: var(--border-color);
-    margin: 12px 0;
+.loyalty-tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 45, 85, 0.1);
+    color: #FF2D55;
+    font-weight: 500;
 }
+
+
 
 /* 特定卡片样式 */
 .night-card .card-title i {
@@ -2178,6 +2217,7 @@ table {
 }
 
 /* 故事模式 Modal */
+/* 故事模式 Modal */
 .story-modal {
     display: none;
     position: fixed;
@@ -2185,41 +2225,57 @@ table {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.3);
     z-index: 9999;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
 }
 
 .story-content {
     width: 100%;
-    max-width: 400px;
-    height: 80vh;
+    max-width: 420px;
+    height: 75vh;
+    min-height: 500px;
     position: relative;
-    color: white;
+    color: #333;
     display: flex;
     flex-direction: column;
 }
 
 .close-story {
     position: absolute;
-    top: -40px;
+    top: -50px;
     right: 0;
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     color: white;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-story:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: rotate(90deg);
 }
 
 .story-slides {
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border-radius: 20px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 1);
 }
 
 .slide {
@@ -2248,39 +2304,45 @@ table {
 .slide-content h1 {
     font-size: 28px;
     margin-bottom: 20px;
-    color: #FFD700;
+    color: #1d1d1f;
+    font-weight: 800;
 }
 
 .slide-content h2 {
     font-size: 24px;
     margin-bottom: 30px;
-    color: #FFF;
+    color: #1d1d1f;
+    font-weight: 700;
 }
 
 .slide-date {
     font-size: 18px;
-    color: #AAA;
+    color: #86868b;
     margin-bottom: 10px;
+    font-weight: 500;
 }
 
 .slide-amount {
     font-size: 40px;
-    font-weight: bold;
-    color: #FFD700;
+    font-weight: 800;
+    background: linear-gradient(135deg, #FF9500 0%, #FF3B30 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 20px;
     font-family: var(--font-family-mono);
 }
 
 .slide-keyword {
     font-size: 36px;
-    font-weight: bold;
-    color: #FF9500;
+    font-weight: 800;
+    color: #007AFF;
     margin-bottom: 20px;
 }
 
 .slide-big-icon {
     font-size: 80px;
-    color: rgba(255, 255, 255, 0.1);
+    color: rgba(0, 0, 0, 0.05);
     margin-top: 40px;
 }
 
@@ -2420,7 +2482,7 @@ table {
     border: none;
     position: relative;
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
 }
 
 .story-entry-card:hover {
@@ -2537,7 +2599,7 @@ table {
     font-size: 12px;
     font-weight: 600;
     padding: 4px 10px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: var(--hover-bg);
     color: var(--secondary-text);
     text-transform: uppercase;
@@ -2557,7 +2619,7 @@ table {
     align-items: flex-start;
     gap: 16px;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     transition: background 0.2s ease;
 }
 
@@ -2653,7 +2715,7 @@ table {
     text-align: center;
     padding: 16px;
     background: var(--hover-bg);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
 }
 
 .metric-label {
@@ -2703,7 +2765,7 @@ table {
     gap: 16px;
     padding: 24px;
     background: var(--hover-bg);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
     transition: all 0.2s ease;
 }
@@ -2719,7 +2781,7 @@ table {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 28px;
     flex-shrink: 0;
 }
@@ -2825,6 +2887,28 @@ table {
     border-top: 2px solid var(--border-color);
 }
 
+.viz-section-header {
+    margin: 40px 0 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+}
+
+.section-subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-subtitle i {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
 .section-title {
     font-size: 24px;
     font-weight: 700;
@@ -2843,6 +2927,7 @@ table {
     grid-column: 1 / -1;
     height: 400px;
     margin-bottom: 24px;
+    margin-top: 24px;
 }
 
 .full-width-viz-card .card-content {
@@ -2877,4 +2962,30 @@ table {
     .viz-row .card-content {
         height: 320px;
     }
+}
+
+/* 图表解读指南样式 */
+.chart-guide {
+    font-size: 13px;
+    color: #666;
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    line-height: 1.6;
+    border: 1px solid #eee;
+}
+
+.chart-guide p {
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.chart-guide ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.chart-guide li {
+    margin-bottom: 4px;
 }

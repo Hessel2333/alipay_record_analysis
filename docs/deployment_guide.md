@@ -12,7 +12,11 @@ pip >= 21.0
 - Linux (推荐 Ubuntu 20.04+)
 - macOS
 - Windows 10+
-~~~
+
+### 1.2 部署平台支持
+- 本地部署（Windows/Mac/Linux）
+- 服务器部署（Docker/Nginx）
+- **PythonAnywhere (PaaS)**: [查看详细部署指南](deployment_pythonanywhere.md)~~~
 
 ### 1.2 依赖包
 ~~~bash

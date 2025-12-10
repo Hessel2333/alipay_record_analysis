@@ -517,6 +517,8 @@ const TransactionFilterManager = {
         window.addEventListener('filterChanged', (e) => {
             console.log('Filter changed:', e.detail);
         });
+
+        return currentFilter;
     },
 
     // 将过滤器参数添加到 URL 查询参数
@@ -543,11 +545,19 @@ function renderSankeyChart(data) {
     const option = {
         tooltip: {
             trigger: 'item',
-            triggerOn: 'mousemove'
+            triggerOn: 'mousemove',
+            formatter: function (params) {
+                if (params.dataType === 'edge') {
+                    return `${params.data.source} > ${params.data.target}<br/>金额: ${formatMoney(params.data.value)} 元`;
+                } else {
+                    return `${params.name}<br/>金额: ${formatMoney(params.data.value || params.value)} 元`;
+                }
+            }
         },
         series: [
             {
                 type: 'sankey',
+                layoutIterations: 0,  // 禁止自动优化布局，严格按照数据顺序排列，避免连线交叉
                 data: data.nodes,
                 links: data.links,
                 emphasis: {
@@ -574,7 +584,7 @@ function renderSankeyChart(data) {
 
 // 时光机 / 故事模式逻辑
 let currentSlide = 0;
-const totalSlides = 5;
+let totalSlides = 5;
 
 function showStoryMode() {
     if (!window.storyData) {
@@ -588,8 +598,9 @@ function showStoryMode() {
     const data = window.storyData;
 
     // 生成幻灯片内容
+    // 生成幻灯片内容
     const slides = [
-        // 封面
+        // 1. 封面
         `
         <div class="slide active">
             <div class="slide-content">
@@ -600,57 +611,131 @@ function showStoryMode() {
             </div>
         </div>
         `,
-        // 最贵的一天
+        // [New] 2. 年度首单
+        (data.features && data.features.first_tx) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🎬 故事的开始</h2>
+                <div class="slide-date">${data.features.first_tx.date}</div>
+                <p>您在 <strong>${data.features.first_tx.merchant}</strong></p>
+                <div class="slide-amount">¥${formatMoney(data.features.first_tx.amount)}</div>
+                <p>用这笔消费开启了全新的一年。</p>
+                <div class="slide-big-icon"><i class="fas fa-play-circle"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // [New] 3. 黄金时间
+        (data.features && data.features.peak_hour !== undefined) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>⏰ 剁手黄金点</h2>
+                <p>每天的 <strong>${data.features.peak_hour}点</strong></p>
+                <div class="slide-keyword" style="font-size:32px">是您最活跃的时刻</div>
+                <p>${data.features.peak_hour < 12 ? '早起的鸟儿有虫吃？' : (data.features.peak_hour > 20 ? '月黑风高夜，正是剁手时。' : '工作日摸鱼下单？')}</p>
+                <div class="slide-big-icon"><i class="fas fa-clock"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // [New] 4. 外卖之王
+        (data.features && data.features.takeout.count > 5) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🥡 外卖品鉴家</h2>
+                <div class="slide-amount">${data.features.takeout.count} 单</div>
+                <p>贡献了 ${formatMoney(data.features.takeout.amount)} 元给外卖/快餐</p>
+                <p>世界那么大，还是外卖最懂你的胃。</p>
+                <div class="slide-big-icon"><i class="fas fa-utensils"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // [New] 5. 季节限定
+        (data.features && data.features.top_season) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🍂 季节限定记忆</h2>
+                <p>您在</p>
+                <div class="slide-keyword" style="color:#FF7950">${data.features.top_season}天</div>
+                <p>留下了最多的消费足迹。</p>
+                <div class="slide-big-icon"><i class="fas ${data.features.top_season === '冬' ? 'fa-snowflake' : (data.features.top_season === '夏' ? 'fa-sun' : 'fa-leaf')}"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // 6. 咖啡/奶茶指数
+        (data.features && data.features.coffee.count > 0) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>☕️ 续命指数</h2>
+                <div class="slide-amount">${data.features.coffee.count} 杯</div>
+                <p>您今年在咖啡/奶茶上投入了</p>
+                <div class="slide-keyword" style="font-size:24px">¥${formatMoney(data.features.coffee.amount)}</div>
+                <p>${data.features.coffee.count > 100 ? '相当于喝掉了一个浴缸的量！' : '您是理性的咖啡因摄入者。'}</p>
+                <div class="slide-big-icon"><i class="fas fa-coffee"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // 7. 深夜哲学
+        (data.features && data.features.night.count > 0) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🌙 深夜哲学</h2>
+                <p>晚10点后，您平均消费</p>
+                <div class="slide-amount">¥${formatMoney(data.features.night.avg)}</div>
+                <p>看来深夜不仅有灵感，还有食欲。</p>
+                <div class="slide-big-icon"><i class="fas fa-moon"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // 8. 周末人格
+        (data.features) ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🎭 周末人格</h2>
+                <p>工作日均价 vs 周末均价</p>
+                <div class="slide-amount" style="font-size:32px">¥${formatMoney(data.features.weekend.weekday_avg)} <span style="font-size:20px;color:#999">vs</span> ¥${formatMoney(data.features.weekend.weekend_avg)}</div>
+                <p>${data.features.weekend.weekend_avg > data.features.weekend.weekday_avg * 2 ? '平日沙县小吃，周末米其林大餐！' : '您的消费习惯非常稳定。'}</p>
+                <div class="slide-big-icon"><i class="fas fa-mask"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // 9. 通胀感知
+        (data.features && data.features.inflation.trend !== 'stable') ? `
+        <div class="slide">
+            <div class="slide-content">
+                <h2>📈 通胀感知</h2>
+                <p>您常去的 <strong>${data.features.inflation.merchant}</strong></p>
+                <div class="slide-amount" style="font-size:32px">¥${formatMoney(data.features.inflation.start_price)} ➔ ¥${formatMoney(data.features.inflation.end_price)}</div>
+                <p>${data.features.inflation.trend === 'up' ? '悄悄涨价了，且喝且珍惜。' : '居然降价了？良心商家！'}</p>
+                <div class="slide-big-icon"><i class="fas fa-chart-line"></i></div>
+            </div>
+        </div>
+        ` : '',
+        // 10. 最贵的一天
         `
         <div class="slide">
             <div class="slide-content">
-                <h2>最"壕"的一天</h2>
+                <h2>💸 最"壕"的一天</h2>
                 <div class="slide-date">${data.max_day.date}</div>
                 <div class="slide-amount">${formatMoney(data.max_day.amount)}</div>
-                <p>那一天，您一定买了心仪已久的东西吧？</p>
+                <p>那天发生了什么？是爱自己多一点吗？</p>
                 <div class="slide-big-icon"><i class="fas fa-shopping-bag"></i></div>
             </div>
         </div>
         `,
-        // 消费最高月
+        // 7. 总结
         `
         <div class="slide">
             <div class="slide-content">
-                <h2>消费巅峰月</h2>
-                <div class="slide-date">${data.max_month.month}</div>
-                <div class="slide-amount">${formatMoney(data.max_month.amount)}</div>
-                <p>这个月的账单，是不是让您心跳加速？</p>
-                <div class="slide-big-icon"><i class="fas fa-chart-bar"></i></div>
-            </div>
-        </div>
-        `,
-        // 最晚消费
-        `
-        <div class="slide">
-            <div class="slide-content">
-                <h2>深夜未眠</h2>
-                <div class="slide-date">${data.latest_tx.time}</div>
-                <p>在 <strong>${data.latest_tx.merchant}</strong></p>
-                <div class="slide-amount">${formatMoney(data.latest_tx.amount)}</div>
-                <p>这么晚还在消费，要注意休息哦</p>
-                <div class="slide-big-icon"><i class="fas fa-moon"></i></div>
-            </div>
-        </div>
-        `,
-        // 总结
-        `
-        <div class="slide">
-            <div class="slide-content">
-                <h2>年度关键词</h2>
+                <h2>✨ 年度关键词</h2>
                 <div class="slide-keyword">${data.top_category.name}</div>
                 <p>这是您投入最多的领域 (${formatMoney(data.top_category.amount)})</p>
-                <p>新的一年，愿您每一笔消费都物超所值！</p>
+                <p>新的一年，愿每一笔消费都物超所值！</p>
                 <div class="slide-big-icon"><i class="fas fa-star"></i></div>
             </div>
         </div>
         `
-    ];
+    ].filter(Boolean); // 过滤掉空字符串
 
+    totalSlides = slides.length; // 更新幻灯片总数
     slidesContainer.innerHTML = slides.join('');
 
     // 生成指示器

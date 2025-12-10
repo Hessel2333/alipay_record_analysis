@@ -101,20 +101,7 @@
     </div>
 </div>
 
-<div class="floating-menu">
-    <button class="filter-btn active" data-filter="all">
-        <i class="fas fa-list"></i>
-        所有交易
-    </button>
-    <button class="filter-btn" data-filter="large">
-        <i class="fas fa-arrow-trend-up"></i>
-        仅大额
-    </button>
-    <button class="filter-btn" data-filter="small">
-        <i class="fas fa-arrow-trend-down"></i>
-        仅小额
-    </button>
-</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -228,8 +215,8 @@
             document.getElementById('monthBalance').textContent = `${formatMoney(Math.abs(balance))} 元`;
             document.getElementById('balanceStatus').textContent = balance >= 0 ? '收大于支' : '支大于收';
 
-            // 修改这里：统一使用 toFixed(1) 显示一位小数
-            const expenseRatio = (stats.total_expense / stats.total_income * 100).toFixed(1);
+            // 修改这里：统一使用 toFixed(2) 显示两位小数
+            const expenseRatio = (stats.total_expense / stats.total_income * 100).toFixed(2);
             if (stats.total_expense > stats.total_income) {
                 document.getElementById('balanceRatio').textContent = `超支比例 ${expenseRatio}%`;
             } else {
@@ -354,7 +341,7 @@
                 tooltip: {
                     trigger: 'item',
                     formatter: function (params) {
-                        const percent = ((params.value / total) * 100).toFixed(1);
+                        const percent = ((params.value / total) * 100).toFixed(2);
                         return `${params.name}<br/>金额：${formatMoney(params.value)} 元<br/>占比：${percent}%`;
                     }
                 },
@@ -366,7 +353,7 @@
                     formatter: name => {
                         const index = categoryData.names.indexOf(name);
                         const amount = categoryData.amounts[index];
-                        const percentage = ((amount / total) * 100).toFixed(1);
+                        const percentage = ((amount / total) * 100).toFixed(2);
                         return `${name} (${percentage}%)`;
                     },
                     textStyle: {
@@ -394,7 +381,7 @@
                         label: {
                             show: (categoryData.amounts[index] / total * 100) > 2,
                             formatter: params => {
-                                const percent = ((params.value / total) * 100).toFixed(1);
+                                const percent = ((params.value / total) * 100).toFixed(2);
                                 return `${params.name}\n${percent}%`;
                             }
                         },

@@ -85,6 +85,15 @@
         const fileList = document.getElementById('fileList');
         const maxFileSize = 16 * 1024 * 1024; // 16MB
 
+        // 初始化过滤器状态（仅为了 UI 统一，不执行实际过滤逻辑）
+        if (window.TransactionFilterManager) {
+            TransactionFilterManager.init(() => {
+                // Settings 页面不需要重新加载数据，所以回调留空
+                console.log('Filter changed in settings (UI only)');
+            });
+        }
+
+
         // 添加文件大小检查
         function checkFileSize(file) {
             if (file.size > maxFileSize) {
@@ -122,6 +131,10 @@
                     updateFileItem(fileItem, data.filename, true, data.message);
                     showToast('文件上传成功');
                     handleUploadSuccess();
+                    // 上传成功后跳转到年度分析页面
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('yearly') }}";
+                    }, 1000);
                 } else {
                     updateFileItem(fileItem, file.name, false, data.error);
                     showError(data.error);

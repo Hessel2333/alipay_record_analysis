@@ -64,7 +64,7 @@
         </main>
     </div>
     <div class="floating-menu">
-        <button class="filter-btn active" data-filter="all">
+        <button class="filter-btn" data-filter="all">
             <i class="fas fa-list-ul"></i>
             <span>全部交易</span>
         </button>
@@ -77,6 +77,23 @@
             <span>仅小额交易</span>
         </button>
     </div>
+    <script>
+        // 立即执行状态设置，防止闪烁
+        (function () {
+            try {
+                const currentFilter = localStorage.getItem('transactionFilter') || 'all';
+                const buttons = document.querySelectorAll('.filter-btn');
+                buttons.forEach(btn => {
+                    if (btn.dataset.filter === currentFilter) {
+                        btn.classList.add('active');
+                    }
+                });
+            } catch (e) {
+                // 如果出错，默认选中第一个
+                document.querySelector('.filter-btn').classList.add('active');
+            }
+        })();
+    </script>
     <div id="detailModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -230,36 +247,7 @@
                 stopSessionCheck();
             });
 
-            // 处理手动删除
-            const deleteAllBtn = document.getElementById('deleteAllBtn');
-            if (deleteAllBtn) {
-                deleteAllBtn.addEventListener('click', async function () {
-                    if (!confirm('确定要删除所有账单数据吗？此操作不可恢复！')) return;
 
-                    try {
-                        stopSessionCheck();  // 停止检查
-                        const response = await fetch('/api/clear_data', {
-                            method: 'POST'
-                        });
-                        const data = await response.json();
-
-                        if (data.success) {
-                            window.location.href = '/';
-                        } else {
-                            showToast('删除失败：' + data.error);
-                            if (shouldCheckSession()) {
-                                startSessionCheck();  // 如果删除失败，重新启动检查
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        showToast('删除失败，请重试');
-                        if (shouldCheckSession()) {
-                            startSessionCheck();  // 如果发生错误，重新启动检查
-                        }
-                    }
-                });
-            }
 
             // 页面加载时启动检查
             startSessionCheck();

@@ -63,6 +63,9 @@ merchant_analysis.txt
 alipay_structure_analysis.txt
 alipay_analysis_report.txt
 
+# 忽略特定的md文件
+deployment_pythonanywhere.md
+
 # 忽略日志文件
 *.log
 

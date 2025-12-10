@@ -8,14 +8,16 @@
 
 {% block content %}
 <div class="category-page-header">
-    <h1 class="page-title">分类分析</h1>
-    <div class="category-selector">
-        <div id="selectedCategory">
-            <!-- 当前选中的分类 -->
-        </div>
-        <div class="category-expanded">
-            <div class="category-pills" id="categoryPills">
-                <!-- 所有分类 -->
+    <div class="header-left">
+        <h1 class="page-title">分类分析</h1>
+        <div class="category-selector">
+            <div id="selectedCategory">
+                <!-- 当前选中的分类 -->
+            </div>
+            <div class="category-expanded">
+                <div class="category-pills" id="categoryPills">
+                    <!-- 所有分类 -->
+                </div>
             </div>
         </div>
     </div>
@@ -622,6 +624,17 @@
                     trigger: 'axis',
                     axisPointer: {
                         type: 'shadow'
+                    },
+                    formatter: function (params) {
+                        let result = params[0].name + '<br/>';
+                        params.forEach(param => {
+                            if (param.seriesName === '交易金额') {
+                                result += param.marker + param.seriesName + ': ' + formatMoney(param.value) + ' 元<br/>';
+                            } else {
+                                result += param.marker + param.seriesName + ': ' + param.value + ' 次<br/>';
+                            }
+                        });
+                        return result;
                     }
                 },
                 legend: {
@@ -698,7 +711,7 @@
                         const range = params[0].name;
                         const count = params[0].value;
                         const total = data.distribution.counts.reduce((a, b) => a + b, 0);
-                        const percentage = ((count / total) * 100).toFixed(1);
+                        const percentage = ((count / total) * 100).toFixed(2);
                         return `金额范围：${range}<br/>
                             交易笔数：${count} 笔<br/>
                             占比：${percentage}%`;

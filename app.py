@@ -41,7 +41,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 添加文件上传配置
-UPLOAD_FOLDER = './tmp/alipay_analysis'  # 临时文件根目录
+UPLOAD_FOLDER = '/tmp/flask_uploads'  # PythonAnywhere 推荐的临时目录
 ALLOWED_EXTENSIONS = {'csv'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -291,10 +291,15 @@ def get_analysis():
         # 高级可视化图表数据
         chord_data = generate_chord_data(df)
         funnel_data = generate_funnel_data(df)
-        graph_data = generate_graph_data(df)
+        quadrant_data = generate_quadrant_data(df)
         radar_data = generate_radar_data(df)
         wordcloud_data = generate_wordcloud_data(df)
         themeriver_data = generate_themeriver_data(df)
+        
+        # 科研风格图表数据
+        boxplot_data = generate_boxplot_data(df)
+        heatmap_data = generate_heatmap_data(df)
+        pareto_data = generate_pareto_data(df)
         
         return jsonify({
             'success': True,
@@ -315,10 +320,13 @@ def get_analysis():
                 'payment_analysis': payment_analysis,
                 'chord_data': chord_data,
                 'funnel_data': funnel_data,
-                'graph_data': graph_data,
+                'quadrant_data': quadrant_data,
                 'radar_data': radar_data,
                 'wordcloud_data': wordcloud_data,
-                'themeriver_data': themeriver_data
+                'themeriver_data': themeriver_data,
+                'boxplot_data': boxplot_data,
+                'heatmap_data': heatmap_data,
+                'pareto_data': pareto_data
             }
         })
         
@@ -1604,7 +1612,9 @@ def upload_file():
         file.save(filepath)
         
         # 更新会话时间戳
-        session['created_at'] = datetime.now().timestamp()
+        now_ts = datetime.now().timestamp()
+        session['created_at'] = now_ts
+        session['session_start'] = datetime.fromtimestamp(now_ts).strftime('%Y-%m-%d %H:%M:%S')
         
         return jsonify({
             'success': True,
@@ -2144,10 +2154,21 @@ def analyze_sankey(df):
             
     if other_cats_amount > 0:
         other_name = "其他分类"
+        other_merchant_name = "其他商家"
+        
+        # 添加二级节点：其他分类
         nodes.append({'name': other_name})
         links.append({
             'source': root_name,
             'target': other_name,
+            'value': float(other_cats_amount)
+        })
+        
+        # 添加三级节点：其他商家
+        nodes.append({'name': other_merchant_name})
+        links.append({
+            'source': other_name,
+            'target': other_merchant_name,
             'value': float(other_cats_amount)
         })
         
@@ -2201,7 +2222,7 @@ def analyze_weekend_vs_monday(df):
     }
 
 def generate_story_data(df):
-    """生成年度账单故事数据"""
+    """生成年度账单故事数据 (增强版)"""
     expense_df = df[df['收/支'] == '支出'].copy()
     
     if expense_df.empty:
@@ -2218,15 +2239,11 @@ def generate_story_data(df):
     max_month_amount = monthly_sum.max()
     
     # 3. 最晚的一笔消费
-    # 提取时间部分
     expense_df['time_only'] = expense_df['交易时间'].dt.time
-    # 排序找最晚 (注意：跨夜的凌晨消费其实算"早"，这里简单找 23:59 附近的)
-    # 或者找凌晨 00:00 - 05:00 之间的
     late_night_df = expense_df[(expense_df['交易时间'].dt.hour >= 0) & (expense_df['交易时间'].dt.hour <= 4)]
     if not late_night_df.empty:
         latest_tx = late_night_df.sort_values('time_only', ascending=False).iloc[0]
     else:
-        # 如果没有凌晨消费，找晚上最晚的
         latest_tx = expense_df.sort_values('time_only', ascending=False).iloc[0]
         
     # 4. 消费最多的分类
@@ -2236,6 +2253,77 @@ def generate_story_data(df):
     # 5. 全年总览
     total_days = (expense_df['交易时间'].max() - expense_df['交易时间'].min()).days + 1
     total_tx_count = len(expense_df)
+    
+    # --- 新增：特色指数 ---
+    
+    # [咖啡指数]
+    coffee_keywords = ['咖啡', 'luckin', 'starbucks', '瑞幸', '星巴克', 'manner', 'tim hortons', '皮爷']
+    coffee_df = expense_df[expense_df['商品说明'].str.contains('|'.join(coffee_keywords), case=False, na=False) | 
+                           expense_df['交易对方'].str.contains('|'.join(coffee_keywords), case=False, na=False)]
+    coffee_count = len(coffee_df)
+    coffee_total = coffee_df['金额'].sum()
+    
+    # [深夜哲学] (22:00 - 05:00)
+    night_philosophy_df = expense_df[(expense_df['交易时间'].dt.hour >= 22) | (expense_df['交易时间'].dt.hour <= 4)]
+    night_avg = night_philosophy_df['金额'].mean() if not night_philosophy_df.empty else 0
+    night_total = night_philosophy_df['金额'].sum()
+    
+    # [周末人格]
+    expense_df['weekday'] = expense_df['交易时间'].dt.weekday # 0=Mon, 6=Sun
+    weekday_df = expense_df[expense_df['weekday'] < 5]
+    weekend_df = expense_df[expense_df['weekday'] >= 5]
+    
+    weekday_avg = weekday_df['金额'].mean() if not weekday_df.empty else 0
+    weekend_avg = weekend_df['金额'].mean() if not weekend_df.empty else 0
+    
+    # [通胀感知]
+    # 找频率最高的商家
+    top_merchant = expense_df['交易对方'].value_counts().idxmax()
+    merchant_df = expense_df[expense_df['交易对方'] == top_merchant].sort_values('交易时间')
+    
+    inflation_data = {'merchant': top_merchant, 'start_price': 0, 'end_price': 0, 'trend': 'stable'}
+    if len(merchant_df) > 5:
+        # 取前3笔和后3笔的平均值比较
+        start_price = merchant_df.head(3)['金额'].mean()
+        end_price = merchant_df.tail(3)['金额'].mean()
+        inflation_data['start_price'] = float(start_price)
+        inflation_data['end_price'] = float(end_price)
+        if end_price > start_price * 1.1:
+            inflation_data['trend'] = 'up'
+        elif end_price < start_price * 0.9:
+            inflation_data['trend'] = 'down'
+
+    # --- 新增 V2 (Rich Story) ---
+    
+    # 1. 年度首单
+    first_tx = expense_df.sort_values('交易时间').iloc[0]
+    
+    # 2. 剁手黄金时间 (小时)
+    peak_hour = expense_df['交易时间'].dt.hour.mode()[0]
+    
+    # 3. 外卖之王
+    takeout_keywords = ['美团', '饿了么', '外卖', '肯德基', '麦当劳']
+    takeout_df = expense_df[expense_df['商品说明'].str.contains('|'.join(takeout_keywords), case=False, na=False) | 
+                            expense_df['交易对方'].str.contains('|'.join(takeout_keywords), case=False, na=False)]
+    takeout_count = len(takeout_df)
+    takeout_amount = takeout_df['金额'].sum()
+    
+    # 4. 消费季节
+    # 12-2 冬, 3-5 春, 6-8 夏, 9-11 秋
+    def get_season(month):
+        if month in [12, 1, 2]: return 'Winter'
+        elif month in [3, 4, 5]: return 'Spring'
+        elif month in [6, 7, 8]: return 'Summer'
+        else: return 'Autumn'
+        
+    expense_df['season'] = expense_df['交易时间'].dt.month.apply(get_season)
+    season_result = expense_df.groupby('season')['金额'].sum()
+    if not season_result.empty:
+        top_season_en = season_result.idxmax()
+        season_map = {'Winter': '冬', 'Spring': '春', 'Summer': '夏', 'Autumn': '秋'}
+        top_season = season_map.get(top_season_en, '全年')
+    else:
+        top_season = '全年'
     
     return {
         'max_day': {
@@ -2259,6 +2347,34 @@ def generate_story_data(df):
             'total_days': int(total_days),
             'tx_count': int(total_tx_count),
             'total_amount': float(expense_df['金额'].sum())
+        },
+        'features': {
+            'coffee': {
+                'count': int(coffee_count),
+                'amount': float(coffee_total)
+            },
+            'night': {
+                'avg': float(night_avg),
+                'total': float(night_total),
+                'count': len(night_philosophy_df)
+            },
+            'weekend': {
+                'weekday_avg': float(weekday_avg),
+                'weekend_avg': float(weekend_avg)
+            },
+            'inflation': inflation_data,
+            'first_tx': {
+                'date': first_tx['交易时间'].strftime('%Y-%m-%d %H:%M'),
+                'merchant': first_tx['交易对方'],
+                'amount': float(first_tx['金额']),
+                'product': first_tx['商品说明']
+            },
+            'peak_hour': int(peak_hour),
+            'takeout': {
+                'count': int(takeout_count),
+                'amount': float(takeout_amount)
+            },
+            'top_season': top_season
         }
     }
 
@@ -2515,24 +2631,6 @@ def check_session_expiry():
             session.clear()
             return redirect(url_for('index'))
 
-@app.teardown_request
-def cleanup_session(exception=None):
-    """请求结束时检查并清理过期的会话文件"""
-    try:
-        upload_folder = app.config['UPLOAD_FOLDER']
-        current_time = datetime.now().timestamp()
-        
-        # 遍历所有会话目录
-        for user_dir in os.listdir(upload_folder):
-            dir_path = os.path.join(upload_folder, user_dir)
-            if os.path.isdir(dir_path):
-                dir_stat = os.stat(dir_path)
-                # 如果目录超过30分钟未修改，则删除
-                if current_time - dir_stat.st_mtime > 1800:
-                    shutil.rmtree(dir_path)
-    except Exception as e:
-        logger.error(f"Session cleanup error: {str(e)}")
-
 # 在应用启动时确保上传目录存在
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -2622,38 +2720,39 @@ def generate_funnel_data(df):
     result.sort(key=lambda x: x['value'], reverse=True)
     return result
 
-def generate_graph_data(df):
-    """生成矩形树图数据（消费分类 -> 头部商家）"""
+def generate_quadrant_data(df):
+    """生成消费象限数据（频次 vs 均价）"""
     expense_df = df[df['收/支'] == '支出'].copy()
     
     if expense_df.empty:
         return []
+        
+    # 按商家聚合
+    merchant_stats = expense_df.groupby('交易对方').agg({
+        '金额': ['count', 'mean', 'sum'],
+        '交易分类': lambda x: x.mode().iloc[0] if not x.mode().empty else '其他'
+    }).reset_index()
     
-    # 取 Top 8 分类
-    top_categories = expense_df.groupby('交易分类')['金额'].sum().nlargest(8).index.tolist()
+    # 重命名列
+    merchant_stats.columns = ['name', 'count', 'avg_amount', 'total_amount', 'category']
+    
+    # 过滤掉极小额或极低频的数据，减少噪音
+    # 例如：总金额 < 50 或 频次 < 2
+    filtered_stats = merchant_stats[
+        (merchant_stats['total_amount'] >= 50) & 
+        (merchant_stats['count'] >= 2)
+    ]
     
     data = []
-    
-    for cat in top_categories:
-        cat_amount = expense_df[expense_df['交易分类'] == cat]['金额'].sum()
-        
-        # 对每个分类，取 Top 10 商家
-        cat_df = expense_df[expense_df['交易分类'] == cat]
-        top_merchants = cat_df.groupby('交易对方')['金额'].sum().nlargest(10)
-        
-        children = []
-        for merchant, amount in top_merchants.items():
-            children.append({
-                'name': merchant,
-                'value': float(amount)
-            })
-            
+    for _, row in filtered_stats.iterrows():
         data.append({
-            'name': cat,
-            'value': float(cat_amount),
-            'children': children
+            'name': row['name'],
+            'category': row['category'],
+            'frequency': int(row['count']),
+            'avg_amount': round(float(row['avg_amount']), 2),
+            'total_amount': round(float(row['total_amount']), 2)
         })
-            
+        
     return data
 
 def generate_radar_data(df):
@@ -2751,6 +2850,106 @@ def generate_themeriver_data(df):
         'data': data
     }
 
+def generate_boxplot_data(df):
+    """生成消费分布云图数据（原箱形图位置）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    expense_df = expense_df[expense_df['金额'] > 0]
+    
+    if expense_df.empty:
+        return {'categories': [], 'data': []}
+    
+    # 取 Top 8 分类
+    top_categories = expense_df.groupby('交易分类')['金额'].sum().nlargest(8).index.tolist()
+    
+    points_data = []
+    box_stats = []
+    
+    for i, cat in enumerate(top_categories):
+        # 1. 获取该分类下的所有交易：用于散点图
+        cat_df = expense_df[expense_df['交易分类'] == cat][['金额', '交易对方', '交易时间']]
+        values = cat_df['金额'].tolist()
+        
+        for _, row in cat_df.iterrows():
+            points_data.append({
+                'c': i, # category index
+                'v': float(row['金额']),
+                'm': row['交易对方'],
+                'd': row['交易时间'].strftime('%Y-%m-%d')
+            })
+            
+        # 2. 计算统计量：用于箱形图
+        if values:
+            q1 = np.percentile(values, 25)
+            q3 = np.percentile(values, 75)
+            # ECharts boxplot: [min, Q1, median, Q3, max]
+            box_stats.append([
+                float(np.min(values)),
+                float(q1),
+                float(np.median(values)),
+                float(q3),
+                float(np.max(values))
+            ])
+        else:
+            box_stats.append([])
+            
+    return {
+        'categories': top_categories,
+        'data': points_data,
+        'box_data': box_stats
+    }
+
+def generate_heatmap_data(df):
+    """生成热力图数据（周-小时消费节律）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return []
+        
+    # 提取星期和小时
+    expense_df['weekday'] = expense_df['交易时间'].dt.dayofweek  # 0-6
+    expense_df['hour'] = expense_df['交易时间'].dt.hour        # 0-23
+    
+    # 统计每个时间格子的消费频次
+    heatmap_data = expense_df.groupby(['weekday', 'hour']).size().reset_index(name='count')
+    
+    # 转换为 ECharts 格式: [weekday, hour, count]
+    # 注意：ECharts heatmap通常 x轴是小时，y轴是星期
+    # data item: [x, y, value] -> [hour, weekday, count]
+    data = []
+    for _, row in heatmap_data.iterrows():
+        data.append([int(row['hour']), int(row['weekday']), int(row['count'])])
+        
+    return data
+
+def generate_pareto_data(df):
+    """生成帕累托图数据（二八定律分析）"""
+    expense_df = df[df['收/支'] == '支出'].copy()
+    
+    if expense_df.empty:
+        return {'categories': [], 'values': [], 'percentages': []}
+        
+    # 按分类汇总
+    category_stats = expense_df.groupby('交易分类')['金额'].sum().sort_values(ascending=False)
+    
+    total_amount = category_stats.sum()
+    if total_amount == 0:
+        return {'categories': [], 'values': [], 'percentages': []}
+        
+    cumulative_sum = category_stats.cumsum()
+    cumulative_percentages = (cumulative_sum / total_amount * 100).round(2)
+    
+    # 取前 15 个分类，避免图表太长
+    top_n = 15
+    categories = category_stats.index[:top_n].tolist()
+    values = category_stats.values[:top_n].tolist()
+    percentages = cumulative_percentages.values[:top_n].tolist()
+    
+    return {
+        'categories': categories,
+        'values': [float(v) for v in values],
+        'percentages': [float(p) for p in percentages]
+    }
+
 if __name__ == '__main__':
     # 判断是否在生产环境
     is_production = os.environ.get('PRODUCTION', False)
@@ -2776,3 +2975,186 @@ if __name__ == '__main__':
             extra_files=extra_files,
             reloader_interval=2
         )
+
+def generate_sankey_data(df):
+    """
+    生成消费关联桑基图数据
+    分析逻辑：查找时间相近（例如 2 小时内）的连续消费行为
+    """
+    try:
+        sorted_df = df.sort_values('交易时间')
+        expense_df = sorted_df[sorted_df['收/支'] == '支出'].copy()
+        
+        links = {}
+        nodes = set()
+        window_seconds = 7200
+        
+        prev_time = None
+        prev_cat = None
+        
+        for idx, row in expense_df.iterrows():
+            curr_time = row['交易时间']
+            curr_cat = row['交易分类']
+            
+            if prev_time is not None:
+                time_diff = (curr_time - prev_time).total_seconds()
+                if 0 < time_diff <= window_seconds and prev_cat != curr_cat:
+                    key = (prev_cat, curr_cat)
+                    if key in links:
+                        links[key] += 1
+                    else:
+                        links[key] = 1
+                    nodes.add(prev_cat)
+                    nodes.add(curr_cat)
+            
+            prev_time = curr_time
+            prev_cat = curr_cat
+            
+        filtered_links = []
+        for (source, target), weight in links.items():
+            if weight >= 2:
+                filtered_links.append({"source": source, "target": target, "value": weight})
+        
+        if len(filtered_links) < 5:
+             filtered_links = [{"source": s, "target": t, "value": w} for (s, t), w in links.items()]
+
+        filtered_links = sorted(filtered_links, key=lambda x: x['value'], reverse=True)[:30]
+        
+        active_nodes = set()
+        for link in filtered_links:
+            active_nodes.add(link['source'])
+            active_nodes.add(link['target'])
+            
+        return {
+            "nodes": [{"name": n} for n in active_nodes],
+            "links": filtered_links
+        }
+    except Exception as e:
+        print(f"Error generating sankey data: {e}")
+        return {"nodes": [], "links": []}
+
+def generate_burndown_data(df):
+    """
+    生成燃尽图数据 (每月视图)
+    """
+    try:
+        expense_df = df[df['收/支'] == '支出'].copy()
+        if expense_df.empty:
+            return {}
+
+        latest_date = expense_df['交易时间'].max()
+        target_year = latest_date.year
+        target_month = latest_date.month
+        
+        month_df = expense_df[
+            (expense_df['交易时间'].dt.year == target_year) & 
+            (expense_df['交易时间'].dt.month == target_month)
+        ]
+        
+        total_expense = month_df['金额'].sum()
+        days_in_month = pd.Period(f"{target_year}-{target_month}").days_in_month
+        
+        ideal_data = [] 
+        actual_data = [] 
+        
+        daily_expense = month_df.groupby(month_df['交易时间'].dt.day)['金额'].sum().to_dict()
+        
+        current_remaining = total_expense 
+        actual_data.append([0, total_expense]) 
+        ideal_data.append([0, total_expense])
+        
+        for day in range(1, days_in_month + 1):
+            ideal_remaining = total_expense * (1 - day / days_in_month)
+            ideal_data.append([day, max(0, ideal_remaining)])
+            
+            if day <= latest_date.day: 
+                spent = daily_expense.get(day, 0)
+                current_remaining -= spent
+                actual_data.append([day, max(0, current_remaining)])
+                
+        return {
+            "month": f"{target_year}-{target_month}",
+            "total": total_expense,
+            "ideal": ideal_data,
+            "actual": actual_data
+        }
+    except Exception as e:
+        print(f"Error generating burndown data: {e}")
+        return {}
+
+def generate_rfm_data(df):
+    """
+    生成商家 RFM 模型数据
+    """
+    try:
+        expense_df = df[df['收/支'] == '支出'].copy()
+        exclude_keywords = ['转账', '红包', '提现', '亲请付']
+        mask = expense_df['交易对方'].apply(lambda x: not any(k in str(x) for k in exclude_keywords))
+        expense_df = expense_df[mask]
+        
+        now = pd.Timestamp.now()
+        
+        merchant_stats = expense_df.groupby('交易对方').agg({
+            '交易时间': lambda x: (now - x.max()).days,
+            '交易对方': 'count', 
+            '金额': 'sum'
+        })
+        merchant_stats.columns = ['recency', 'frequency', 'monetary']
+        
+        top_merchants = merchant_stats[merchant_stats['frequency'] > 2].copy()
+        
+        def get_label(row):
+            if row['frequency'] > 10 and row['monetary'] > 1000:
+                return '灵魂伴侣' 
+            elif row['frequency'] > 10:
+                return '高频日常' 
+            elif row['monetary'] > 1000:
+                return '重金过客' 
+            else:
+                return '普通朋友'
+                
+        top_merchants['label'] = top_merchants.apply(get_label, axis=1)
+        
+        result = []
+        for merchant, row in top_merchants.iterrows():
+            if len(str(merchant)) > 8: 
+                display_name = str(merchant)[:8] + '..'
+            else:
+                display_name = str(merchant)
+                
+            result.append({
+                "name": display_name,
+                "r": int(row['recency']),
+                "f": int(row['frequency']),
+                "m": float(row['monetary']),
+                "label": row['label']
+            })
+            
+        return sorted(result, key=lambda x: x['m'], reverse=True)[:50] 
+    except Exception as e:
+        print(f"Error generating RFM data: {e}")
+        return []
+
+def generate_spiral_data(df):
+    """
+    生成螺旋图数据 (消费周期分析)
+    """
+    try:
+        expense_df = df[df['收/支'] == '支出'].copy()
+        
+        expense_df['weekday'] = expense_df['交易时间'].dt.weekday 
+        expense_df['hour'] = expense_df['交易时间'].dt.hour 
+        expense_df['time_slot'] = expense_df['weekday'] * 24 + expense_df['hour']
+        
+        stats = expense_df.groupby('time_slot')['金额'].agg(['sum', 'count']).reset_index()
+        stats_dict = stats.set_index('time_slot')['sum'].to_dict()
+        
+        result = []
+        for i in range(168):
+            val = stats_dict.get(i, 0)
+            result.append([i, val])
+            
+        return result
+    except Exception as e:
+        print(f"Error generating spiral data: {e}")
+        return []

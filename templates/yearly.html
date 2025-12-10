@@ -245,7 +245,7 @@
             document.getElementById('balanceStatus').textContent = balance >= 0 ? '收大于支' : '支大于收';
 
             // 修改这里：根据收支情况显示不同的比例文本
-            const expenseRatio = (stats.total_expense / stats.total_income * 100).toFixed(1);
+            const expenseRatio = (stats.total_expense / stats.total_income * 100).toFixed(2);
             if (stats.total_expense > stats.total_income) {
                 document.getElementById('balanceRatio').textContent = `超支比例 ${expenseRatio}%`;
             } else {
@@ -389,7 +389,7 @@
                             // 使用整数格式化
                             return new Intl.NumberFormat('zh-CN', {
                                 minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
+                                maximumFractionDigits: 2
                             }).format(value);
                         }
                     }
@@ -427,7 +427,7 @@
                 tooltip: {
                     trigger: 'item',
                     formatter: function (params) {
-                        const percent = ((params.value / total) * 100).toFixed(1);
+                        const percent = ((params.value / total) * 100).toFixed(2);
                         return `${params.name}<br/>金额：${formatMoney(params.value)} 元<br/>占比：${percent}%`;
                     }
                 },
@@ -439,7 +439,7 @@
                     formatter: name => {
                         const index = categoryData.names.indexOf(name);
                         const amount = categoryData.amounts[index];
-                        const percentage = ((amount / total) * 100).toFixed(1);
+                        const percentage = ((amount / total) * 100).toFixed(2);
                         return `${name} (${percentage}%)`;
                     },
                     textStyle: {
@@ -472,7 +472,7 @@
                         show: true,
                         position: 'outside',
                         formatter: params => {
-                            const percent = ((params.value / total) * 100).toFixed(1);
+                            const percent = ((params.value / total) * 100).toFixed(2);
                             return percent > 2 ? `${params.name}\n${percent}%` : '';
                         },
                         fontSize: 12,

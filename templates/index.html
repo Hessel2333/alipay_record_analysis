@@ -66,3 +66,16 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 初始化过滤器状态（仅为了 UI 统一）
+        if (window.TransactionFilterManager) {
+            TransactionFilterManager.init(() => {
+                console.log('Filter changed in index (UI only)');
+            });
+        }
+    });
+</script>
+{% endblock %}

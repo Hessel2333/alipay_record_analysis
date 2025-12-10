@@ -61,6 +61,12 @@ alipay-analysis/
 │   ├── insights.html    # 消费洞察
 │   ├── transactions.html # 交易记录
 │   └── settings.html    # 设置页面
+├── docs/                 # 文档目录
+│   ├── user_guide.md        # 系统的详细使用说明
+│   ├── faq.md               # 使用过程中的疑问解答
+│   ├── api_reference.md     # 开发者接口文档
+│   ├── deployment_guide.md  # 本地或服务器部署说明
+│   └── deployment_pythonanywhere.md # 针对 PythonAnywhere 平台的部署指南
 └── README.md            # 项目说明文档
 ~~~
 

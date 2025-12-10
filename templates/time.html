@@ -61,9 +61,9 @@
 </div>
 
 <div class="chart-grid">
-    <div class="chart-card">
+    <div class="analysis-card" style="height: auto; min-height: 400px;">
         <div class="chart-header">
-            <h2 class="chart-title">每日消费热力图</h2>
+            <h2 class="card-title">每日消费热力图</h2>
             <div class="chart-controls">
                 <button id="expenseBtn" class="chart-control-btn active">支出金额</button>
                 <button id="incomeBtn" class="chart-control-btn">收入金额</button>
@@ -75,18 +75,18 @@
 </div>
 
 <div class="chart-grid">
-    <div class="chart-card">
-        <div class="chart-header">
-            <h2 class="chart-title">日内时段分布</h2>
+    <div class="analysis-card" style="height: auto;">
+        <div class="card-header">
+            <h2 class="card-title">日内时段分布</h2>
         </div>
         <div class="chart-container" id="hourlyChart"></div>
     </div>
 </div>
 
 <div class="chart-grid">
-    <div class="chart-card">
-        <div class="chart-header">
-            <h2 class="chart-title">工作日/周末分布</h2>
+    <div class="analysis-card" style="height: auto;">
+        <div class="card-header">
+            <h2 class="card-title">工作日/周末分布</h2>
         </div>
         <div class="chart-container" id="weekdayChart"></div>
     </div>
@@ -231,7 +231,7 @@
                         if (dataType === 'transaction') {
                             return `${params.data[0]}<br>${value} 笔交易`;
                         } else {
-                            return `${params.data[0]}<br>${value.toFixed(2)} 元`;
+                            return `${params.data[0]}<br>${formatMoney(value)} 元`;
                         }
                     }
                 },
@@ -376,6 +376,17 @@
                             trigger: 'axis',
                             axisPointer: {
                                 type: 'cross'
+                            },
+                            formatter: function (params) {
+                                let result = params[0].name + '<br/>';
+                                params.forEach(param => {
+                                    if (param.seriesName === '消费金额') {
+                                        result += param.marker + param.seriesName + ': ' + formatMoney(param.value) + ' 元<br/>';
+                                    } else {
+                                        result += param.marker + param.seriesName + ': ' + param.value + ' 笔<br/>';
+                                    }
+                                });
+                                return result;
                             }
                         },
                         legend: {
@@ -455,7 +466,7 @@
                             formatter: function (params) {
                                 let result = params[0].name + '<br/>';
                                 params.forEach(param => {
-                                    result += param.marker + param.seriesName + ': ' + param.value.toFixed(1) + '%<br/>';
+                                    result += param.marker + param.seriesName + ': ' + param.value.toFixed(2) + '%<br/>';
                                 });
                                 return result;
                             }
