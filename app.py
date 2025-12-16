@@ -1486,7 +1486,7 @@ def category_analysis():
         total_series = total_grouped['金额'].sum().round(2)
         transaction_counts = grouped.size()
         
-        # 计算每个时间点的占比
+        # 计算原始稀疏数据的占比 (保持原有逻辑)
         ratios = []
         for date in time_series.index:
             if date in total_series.index and total_series[date] > 0:
@@ -1494,7 +1494,48 @@ def category_analysis():
             else:
                 ratio = 0
             ratios.append(ratio)
+
+        # --- 新增：生成全量时间轴数据 (trend_full) ---
+        full_time_series = time_series.copy()
+        full_transaction_counts = transaction_counts.copy()
+        full_ratios = []
         
+        if time_range == 'year':
+            # 生成所有月份: 2024-01 到 2024-12
+            full_index = pd.period_range(start=f'{year}-01', end=f'{year}-12', freq='M').strftime('%Y-%m')
+            full_time_series = time_series.reindex(full_index, fill_value=0)
+            full_transaction_counts = transaction_counts.reindex(full_index, fill_value=0)
+            # 全量数据的 total_series 也需要补全，以便计算占比
+            full_total_series = total_series.reindex(full_index, fill_value=0)
+            
+            for date in full_time_series.index:
+                if full_total_series[date] > 0:
+                    ratio = (full_time_series[date] / full_total_series[date] * 100).round(1)
+                else:
+                    ratio = 0
+                full_ratios.append(ratio)
+                
+        elif time_range == 'month':
+            # 生成当月所有日期
+            days_in_month = calendar.monthrange(int(year), int(month))[1]
+            full_index = pd.period_range(start=f'{year}-{month}-01', periods=days_in_month, freq='D').strftime('%Y-%m-%d')
+            full_time_series = time_series.reindex(full_index, fill_value=0)
+            full_transaction_counts = transaction_counts.reindex(full_index, fill_value=0)
+            full_total_series = total_series.reindex(full_index, fill_value=0)
+            
+            for date in full_time_series.index:
+                if full_total_series[date] > 0:
+                    ratio = (full_time_series[date] / full_total_series[date] * 100).round(1)
+                else:
+                    ratio = 0
+                full_ratios.append(ratio)
+        else:
+            # 'all' 模式暂不强制补全所有年份，或者可以按需补充
+            full_time_series = time_series
+            full_transaction_counts = transaction_counts
+            # 对于 'all'，直接复用原逻辑计算的 ratio
+            full_ratios = ratios
+            
         # 计算消费规律
         hour_pattern = category_df.groupby(category_df['交易时间'].dt.hour)['金额'].agg([
             ('count', 'count'),
@@ -1506,7 +1547,19 @@ def category_analysis():
         amount_labels = ['0-50', '50-100', '100-200', '200-500', '500-1000', '1000+']
         amount_dist = pd.cut(category_df['金额'], bins=amount_ranges, labels=amount_labels)
         amount_distribution = amount_dist.value_counts().sort_index()
+
+        # --- 新增：生成全量消费规律 (pattern_full) ---
+        full_hours = pd.Index(range(24), name='交易时间')
+        hour_pattern_full = hour_pattern.reindex(full_hours, fill_value=0)
         
+        # --- 新增：生成全量金额分布 (distribution_full) ---
+        # amount_distribution 已经是 Series, index 是 intervals/categories
+        # amount_dist.value_counts() 会返回所有 observed=False 的 bin 吗？
+        # pd.cut 默认 observed=True (for categorical), so we might miss bins with 0 counts if not careful.
+        # But here amount_labels are explicit. Let's ensure we reindex against all labels.
+        full_amount_labels = amount_labels
+        amount_distribution_full = amount_distribution.reindex(full_amount_labels, fill_value=0)
+
         return jsonify({
             'category': category,
             'stats': {
@@ -1520,21 +1573,21 @@ def category_analysis():
                 'median_amount': float(category_df['金额'].median()) if not category_df.empty else 0
             },
             'trend': {
-                'dates': time_series.index.tolist(),
-                'amounts': time_series.values.tolist(),
-                'counts': transaction_counts.tolist(),
-                'ratios': ratios
+                'dates': full_time_series.index.tolist(),
+                'amounts': full_time_series.fillna(0).values.tolist(),
+                'counts': full_transaction_counts.fillna(0).values.tolist(),
+                'ratios': [0 if np.isnan(x) else x for x in full_ratios]
             },
             'pattern': {
-                'hours': hour_pattern.index.tolist(),
-                'counts': hour_pattern['count'].tolist(),
-                'amounts': hour_pattern['sum'].tolist(),
-                'averages': (hour_pattern['sum'] / hour_pattern['count']).round(2).tolist()
+                'hours': hour_pattern_full.index.tolist(),
+                'counts': hour_pattern_full['count'].tolist(),
+                'amounts': hour_pattern_full['sum'].tolist(),
+                'averages': (hour_pattern_full['sum'] / hour_pattern_full['count']).round(2).fillna(0).tolist()
             },
             'distribution': {
-                'ranges': amount_distribution.index.tolist(),
-                'counts': amount_distribution.values.tolist(),
-                'percentages': (amount_distribution / amount_distribution.sum() * 100).round(1).tolist()
+                'ranges': amount_distribution_full.index.tolist(),
+                'counts': amount_distribution_full.values.tolist(),
+                'percentages': (amount_distribution_full / amount_distribution_full.sum() * 100).round(1).fillna(0).tolist()
             }
         })
         
